@@ -1,66 +1,158 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# POS Cafe System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Sistem POS (Point of Sale) untuk sebuah kafe yang dibuat menggunakan **Laravel 11** dan **Filament**. Proyek ini mencakup manajemen produk, bahan baku, transaksi, pembelian bahan baku, shift kasir, laporan penjualan, dan lebih banyak lagi. Sistem ini dirancang untuk mempermudah pengelolaan operasional sehari-hari di kafe dengan fokus pada kemudahan penggunaan dan integrasi data.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🛠 Teknologi yang Digunakan
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+* **Laravel 11**: Framework PHP yang powerful untuk pengembangan web.
+* **Filament**: Admin panel dan dashboard yang elegan untuk Laravel.
+* **MySQL**: Sistem manajemen database relasional yang digunakan untuk penyimpanan data.
+* **Chart.js**: Library JavaScript untuk menampilkan grafik data penjualan secara interaktif.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## 📋 Fitur Utama
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+Sistem POS Cafe ini dilengkapi dengan berbagai fitur untuk mendukung operasional kafe Anda:
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+* **Manajemen Produk**:
+    * Fungsionalitas CRUD (Create, Read, Update, Delete) untuk produk menu.
+    * Pengelolaan kategori produk untuk organisasi yang lebih baik.
+    * Pengaturan harga, stok, dan deskripsi detail untuk setiap produk.
+* **Manajemen Bahan Baku**:
+    * Fungsionalitas CRUD untuk bahan baku (ingredient).
+    * Input komposisi bahan baku untuk setiap produk, memungkinkan pengurangan stok otomatis saat produk terjual.
+    * Sistem notifikasi untuk bahan baku yang hampir kedaluwarsa.
+* **Transaksi & Pembayaran**:
+    * Membuat order baru yang intuitif untuk pelanggan.
+    * Mengelola berbagai jenis pembayaran dan status order.
+    * Opsi untuk mengirim struk via WhatsApp kepada pelanggan.
+* **Shift Kasir**:
+    * Fitur untuk membuka dan menutup shift kasir.
+    * Rekapitulasi transaksi per shift untuk pelacakan performa.
+* **Modul Pembelian (Restok)**:
+    * Mengelola proses pembelian bahan baku dari supplier.
+    * Penambahan stok bahan baku secara otomatis setelah pembelian.
+* **Laporan & Grafik**:
+    * Grafik penjualan harian dan identifikasi produk terlaris.
+    * Laporan transaksi mendetail berdasarkan hari, shift, atau kasir.
+* **Role & Permission**:
+    * Pengaturan role pengguna yang fleksibel seperti **Admin**, **Kasir**, dan **Owner**.
+    * Akses granular ke berbagai bagian sistem sesuai dengan role pengguna.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-## Laravel Sponsors
+## 💻 Prasyarat
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Sebelum memulai instalasi, pastikan Anda telah menginstal beberapa software berikut di sistem Anda:
 
-### Premium Partners
+* **PHP 8.0+**
+* **Composer**
+* **MySQL** atau **MariaDB**
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+---
 
-## Contributing
+## 🚀 Instalasi
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Ikuti langkah-langkah di bawah ini untuk menginstal dan menjalankan aplikasi di lingkungan lokal Anda:
 
-## Code of Conduct
+1.  **Clone Repository**
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+    Buka terminal atau command prompt Anda dan jalankan perintah berikut untuk mengkloning proyek:
+    ```bash
+    git clone [https://github.com/username/pos-cafe.git](https://github.com/username/pos-cafe.git)
+    cd pos-cafe
+    ```
+    *(Ganti `username/pos-cafe.git` dengan URL repositori sebenarnya)*
 
-## Security Vulnerabilities
+2.  **Instal Dependensi**
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+    Setelah masuk ke direktori proyek, instal semua dependensi PHP menggunakan Composer:
+    ```bash
+    composer install
+    ```
 
-## License
+3.  **Konfigurasi `.env`**
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+    Salin file contoh konfigurasi `.env.example` menjadi `.env`:
+    ```bash
+    cp .env.example .env
+    ```
+    Kemudian, buka file `.env` dan sesuaikan konfigurasi database (`DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`) serta layanan lain sesuai kebutuhan Anda.
+
+4.  **Generate Key Aplikasi**
+
+    Jalankan perintah berikut untuk menghasilkan kunci aplikasi Laravel:
+    ```bash
+    php artisan key:generate
+    ```
+
+5.  **Migrasi Database**
+
+    Jalankan migrasi untuk membuat semua tabel yang diperlukan di database Anda:
+    ```bash
+    php artisan migrate
+    ```
+
+6.  **Seed Data (Opsional)**
+
+    Jika Anda ingin menambahkan data sampel (seperti user, role, dll.) untuk pengujian, jalankan seeder:
+    ```bash
+    php artisan db:seed
+    ```
+
+7.  **Jalankan Aplikasi**
+
+    Untuk menjalankan aplikasi, gunakan perintah Artisan:
+    ```bash
+    php artisan serve
+    ```
+    Aplikasi Anda sekarang dapat diakses melalui browser di: `http://localhost:8000`.
+
+---
+
+## 🔐 Role & Akses Pengguna
+
+Sistem ini memiliki beberapa peran pengguna dengan tingkat akses yang berbeda:
+
+* **Admin**: Memiliki akses penuh untuk manajemen produk, bahan baku, transaksi, laporan, dan pengaturan sistem.
+* **Kasir**: Dapat melakukan transaksi, membuat order, dan mengelola pembayaran.
+* **Owner**: Memiliki akses penuh ke seluruh aplikasi, termasuk fitur-fitur administratif dan laporan.
+
+---
+
+## 🧩 Struktur Folder
+
+Berikut adalah gambaran singkat tentang struktur folder utama dalam proyek ini:
+
+* `app/Models`: Berisi semua model Eloquent yang digunakan dalam aplikasi untuk berinteraksi dengan database.
+* `app/Filament/Resources`: Lokasi untuk semua Filament Resources yang menangani fungsionalitas CRUD dan tampilan admin panel.
+* `app/Services`: Berisi *service helper* atau *business logic* yang dapat digunakan kembali, misalnya untuk pengurangan stok otomatis.
+* `database/migrations`: Skrip migrasi database yang mendefinisikan struktur tabel.
+* `resources/views/filament`: Berisi view Blade yang digunakan untuk kustomisasi tampilan admin panel Filament.
+
+---
+
+## 🚧 Fitur yang Sedang Dikembangkan
+
+Beberapa fitur sedang dalam pengembangan untuk meningkatkan fungsionalitas sistem:
+
+* **Export Laporan ke PDF/Excel**: Menambahkan kemampuan untuk mengekspor laporan transaksi dan pembelian ke format PDF atau Excel.
+
+---
+
+## 📄 Lisensi
+
+Proyek ini dilisensikan di bawah **MIT License**. Lihat file `LICENSE` di repository untuk detail lebih lanjut.
+
+---
+
+## 📞 Kontak
+
+Jika Anda memiliki pertanyaan, saran, atau menemukan masalah, jangan ragu untuk menghubungi saya di: [jackyandrazat@gmail.com](mailto:jackyandrazat@gmail.com).
+
+---
+
+Terima kasih telah menggunakan **POS Cafe System**! 🚀
