@@ -62,7 +62,7 @@ Ikuti langkah-langkah di bawah ini untuk menginstal dan menjalankan aplikasi di 
 
     Buka terminal atau command prompt Anda dan jalankan perintah berikut untuk mengkloning proyek:
     ```bash
-    git clone [https://github.com/username/pos-cafe.git](https://github.com/username/pos-cafe.git)
+    git clone https://github.com/Jackyandrazat/pos-cafe.git
     cd pos-cafe
     ```
     *(Ganti `username/pos-cafe.git` dengan URL repositori sebenarnya)*
