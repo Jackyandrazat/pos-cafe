@@ -29,7 +29,7 @@ class ShiftPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasRole('kasir');
+        return $user->hasRole('kasir') || $user->hasRole('admin');
     }
 
     /**
@@ -37,7 +37,7 @@ class ShiftPolicy
      */
     public function update(User $user, Shift $shift): bool
     {
-        return $user->hasRole('kasir');
+        return $user->hasRole('kasir') || $user->hasRole('admin') || $user->hasRole('owner');
     }
 
     /**

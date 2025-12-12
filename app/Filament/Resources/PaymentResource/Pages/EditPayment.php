@@ -17,18 +17,24 @@ class EditPayment extends EditRecord
         ];
     }
 
-    protected function mutateFormDataBeforeSave(array $data): array
+    protected function afterSave(): void
     {
-        $orderTotal = 0;
+        $payment = $this->record;
+        $order = $payment->order()->with('order_items.product.ingredients.ingredient')->first();
 
-        if (!empty($data['order_id'])) {
-            $order = \App\Models\Order::find($data['order_id']);
-            // Ambil total order dari model Order
-            if ($order) {
-                $orderTotal = $order->total_order;
-            }
+        $kasir = auth()->user(); // kasir yang login
+        $payment->change_return = max(($payment->amount_paid ?? 0) - ($order->total_order ?? 0), 0);
+        $payment->save();
+        $totalBayar = $payment->amount_paid;
+        $admin = \App\Models\User::first(); // sementara ambil user pertama
+
+        if ($admin) {
+            \Filament\Notifications\Notification::make()
+                ->title('Pembayaran Berhasil Diedit')
+                ->body("Pembayaran sebesar Rp " . number_format($totalBayar, 0, ',', '.') . " berhasil diedit oleh kasir {$kasir->name}.")
+                ->success()
+                ->sendToDatabase($admin);
         }
-        $data['change_return'] = max(($data['amount_paid'] ?? 0) - $orderTotal, 0);
 
         $orderForPaymentExist = \App\Models\Order::find($data['order_id'] ?? null);
 
@@ -37,7 +43,6 @@ class EditPayment extends EditRecord
                 'order_id' => 'Order sudah selesai, tidak bisa dibuat pembayaran.'
             ]);
         }
-
-        return $data;
     }
+
 }

@@ -13,7 +13,7 @@ class AreaPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasRole('admin');
+        return $user->hasRole('admin') || $user->hasRole('owner');
     }
 
     /**
@@ -21,7 +21,7 @@ class AreaPolicy
      */
     public function view(User $user, Area $area): bool
     {
-        return $user->hasRole('admin');
+        return $user->hasRole('admin') || $user->hasRole('owner');
     }
 
     /**

@@ -18,20 +18,19 @@ class OrderItemBuilder extends Component
     public function mount($orderId = null)
     {
         $this->products = Product::all();
-         $this->orderId = $orderId;
+        $this->orderId = $orderId;
 
         if ($orderId) {
             $order = Order::with('order_items.product')->find($orderId);
-
             if ($order) {
                 $this->selectedItems = $order->order_items->map(function ($item) {
                     return [
                         'product_id' => $item->product_id,
-                        'name' => $item->product->name,
-                        'qty' => $item->qty,
-                        'price' => $item->price,
-                        'discount' => $item->discount,
-                        'subtotal' => $item->subtotal,
+                        'name' => $item->product->name ?? 'Produk Tidak Ditemukan',
+                        'qty' => $item->qty ?? 1,
+                        'price' => $item->price ?? 0,
+                        'discount' => $item->discount ?? 0,
+                        'subtotal' => $item->subtotal ?? 0,
                     ];
                 })->toArray();
             }
@@ -50,9 +49,9 @@ class OrderItemBuilder extends Component
 
         $this->selectedItems[] = [
             'product_id' => $product->id,
-            'name' => $product->name,
-            'price' => $product->price,
-            'qty' => $this->qty,
+            'name' => $product->name ?? 'Produk Tidak Ditemukan',
+            'price' => $product->price ?? 0,
+            'qty' => $this->qty ?? 1,
             'discount' => $this->discount,
             'subtotal' => max($subtotal, 0),
         ];
@@ -81,7 +80,7 @@ class OrderItemBuilder extends Component
     public function render()
     {
         // return view('livewire.order-item-builder');
-         return view('livewire.order-item-builder', [
+        return view('livewire.order-item-builder', [
         'totalSubtotal' => collect($this->selectedItems)->sum('subtotal'),
         ]);
     }

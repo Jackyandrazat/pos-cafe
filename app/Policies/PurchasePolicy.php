@@ -13,7 +13,7 @@ class PurchasePolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasRole('admin');
+        return $user->hasRole('admin') || $user->hasRole('owner');
     }
 
     /**
@@ -21,7 +21,7 @@ class PurchasePolicy
      */
     public function view(User $user, Purchase $purchase): bool
     {
-        return $user->hasRole('admin');
+        return $user->hasRole('admin') || $user->hasRole('owner');
     }
 
     /**

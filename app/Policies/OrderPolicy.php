@@ -13,7 +13,7 @@ class OrderPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasRole('kasir');
+        return $user->hasRole('admin') || $user->hasRole('owner') || $user->hasRole('kasir');
     }
 
     /**
@@ -21,7 +21,7 @@ class OrderPolicy
      */
     public function view(User $user, Order $order): bool
     {
-        return $user->hasRole('kasir');
+        return $user->hasRole('admin') || $user->hasRole('owner') || $user->hasRole('kasir');
     }
 
     /**
@@ -29,7 +29,7 @@ class OrderPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasRole('kasir');
+        return $user->hasRole('admin') || $user->hasRole('kasir');
     }
 
     /**
@@ -37,14 +37,15 @@ class OrderPolicy
      */
     public function update(User $user, Order $order): bool
     {
-        return $user->hasRole('kasir'); }
+        return $user->hasRole('admin') || $user->hasRole('kasir');
+    }
 
     /**
      * Determine whether the user can delete the model.
      */
     public function delete(User $user, Order $order): bool
     {
-        return $user->hasRole('kasir');
+        return $user->hasRole('admin') || $user->hasRole('owner');
     }
 
     /**
@@ -52,7 +53,7 @@ class OrderPolicy
      */
     public function restore(User $user, Order $order): bool
     {
-        return $user->hasRole('kasir');
+        return $user->hasRole('admin') || $user->hasRole('owner');
     }
 
     /**
@@ -60,6 +61,6 @@ class OrderPolicy
      */
     public function forceDelete(User $user, Order $order): bool
     {
-        return $user->hasRole('kasir');
+        return $user->hasRole('admin') || $user->hasRole('owner');
     }
 }

@@ -9,12 +9,14 @@ use App\Models\Payment;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
+use Filament\Tables\Actions\Action;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Database\Eloquent\Builder;
+use App\Filament\Exports\PaymentsExporter;
+use Filament\Tables\Actions\ExportBulkAction;
 use App\Filament\Resources\PaymentResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\PaymentResource\RelationManagers;
-use Filament\Tables\Actions\Action;
-use Illuminate\Support\Facades\URL;
 
 class PaymentResource extends Resource
 {
@@ -113,6 +115,8 @@ class PaymentResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    ExportBulkAction::make()
+                    ->exporter(PaymentsExporter::class)
                 ]),
             ]);
     }

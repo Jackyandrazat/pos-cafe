@@ -8,8 +8,15 @@ use App\Models\Order;
 use App\Models\Product;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Resources\Resource;
+use Illuminate\Support\Collection;
+use Filament\Tables\Actions\Action;
+use App\Filament\Exports\OrderExporter;
+use Filament\Tables\Actions\BulkAction;
+use App\Filament\Exports\ProductExporter;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Tables\Actions\ExportBulkAction;
 use App\Filament\Resources\OrderResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\OrderResource\RelationManagers;
@@ -117,6 +124,24 @@ class OrderResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    // ExportBulkAction::make() // tanpa job ,
+                    ExportBulkAction::make()
+                    ->exporter(OrderExporter::class),
+                    BulkAction::make('export_pdf')
+                    ->label('Export PDF')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->action(function (Collection $records) {
+                        $orders = $records;
+
+                        $pdf = Pdf::loadView('exports.order-pdf', ['orders' => $orders]);
+
+                        return response()->streamDownload(
+                            fn () => print($pdf->stream()),
+                            'laporan-order-'.now()->format('Ymd_His').'.pdf'
+                        );
+                    })
+                    ->requiresConfirmation()
+                    ->color('primary')
                 ]),
             ]);
     }

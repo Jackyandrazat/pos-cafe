@@ -29,7 +29,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-            ->brandName('Pasana Cafe')
+            ->brandName('Pasan By Kodewebcom')
             ->colors([
                 'primary' => Color::Amber,
             ])

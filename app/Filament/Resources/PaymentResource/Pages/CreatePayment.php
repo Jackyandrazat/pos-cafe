@@ -34,11 +34,13 @@ class CreatePayment extends CreateRecord
     {
         $payment = $this->record;
         // $order = $payment->order;
-         $order = $payment->order()->with('order_items.product.ingredients.ingredient')->first();
+        $order = $payment->order()->with('order_items.product.ingredients.ingredient')->first();
         // dd($order);
 
         $kasir = auth()->user(); // kasir yang login
+        $payment->change_return = max(($payment->amount_paid ?? 0) - ($order->total_order ?? 0), 0);
         $totalBayar = $payment->amount_paid;
+        $payment->save();
         $admin = \App\Models\User::first(); // sementara ambil user pertama
 
         if ($admin) {
