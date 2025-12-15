@@ -7,9 +7,11 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
+    use HasApiTokens;
     use HasFactory;
     use Notifiable;
     use SoftDeletes;
@@ -22,7 +24,9 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'phone',
         'password',
+        'is_guest',
     ];
 
     /**
@@ -45,7 +49,13 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_guest' => 'boolean',
         ];
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
     }
 
     public function roles()
