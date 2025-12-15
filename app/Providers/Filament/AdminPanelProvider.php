@@ -47,6 +47,8 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Widgets\SalesPerCashierWidget::class,
                 \App\Filament\Widgets\SalesPerShiftWidget::class,
                 \App\Filament\Widgets\TopSellingProductsWidget::class,
+                \App\Filament\Widgets\DailyTopOrdersWidget::class,
+                \App\Filament\Widgets\DailyTopOrdersChartWidget::class,
                 \App\Filament\Widgets\ExpiredIngredientsWidget::class,
             ])
             ->middleware([

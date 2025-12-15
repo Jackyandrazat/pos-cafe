@@ -2,14 +2,18 @@
 
 namespace App\Filament\Widgets;
 
-use Illuminate\Support\Facades\DB;
 use App\Models\Payment;
+use App\Models\User;
 use Filament\Widgets\ChartWidget;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class SalesChartWidget extends ChartWidget
 {
     protected static ?string $heading = 'Total Penjualan Harian';
 
+
+    protected static ?int $sort = 6;
     protected function getType(): string
     {
         return 'bar'; // atau 'line'
@@ -17,7 +21,21 @@ class SalesChartWidget extends ChartWidget
 
     protected function getData(): array
     {
-        $dailySales = Payment::selectRaw('DATE(created_at) as date, SUM(amount_paid) as total')
+        $user = Auth::user();
+
+        $dailySales = Payment::query()
+            ->selectRaw('DATE(created_at) as date, SUM(amount_paid) as total')
+            ->when($this->shouldRestrictToUser($user), function ($query) use ($user) {
+                if (! $user) {
+                    $query->whereRaw('1 = 0');
+
+                    return;
+                }
+
+                $query->whereHas('order', function ($orderQuery) use ($user) {
+                    $orderQuery->where('user_id', $user->id);
+                });
+            })
             ->groupBy(DB::raw('DATE(created_at)'))
             ->orderBy('date')
             ->pluck('total', 'date');
@@ -32,6 +50,15 @@ class SalesChartWidget extends ChartWidget
                 ],
             ],
         ];
+    }
+
+    protected function shouldRestrictToUser(?User $user): bool
+    {
+        if (! $user) {
+            return true;
+        }
+
+        return ! $user->hasAnyRole(['admin', 'superadmin', 'owner']);
     }
 
     public function chartOptions(): array

@@ -2,9 +2,10 @@
 
 namespace App\Filament\Widgets;
 
-use Illuminate\Support\Facades\DB;
 use App\Models\Payment;
+use App\Models\User;
 use Filament\Widgets\ChartWidget;
+use Illuminate\Support\Facades\Auth;
 
 class SalesPerShiftWidget extends ChartWidget
 {
@@ -43,5 +44,19 @@ class SalesPerShiftWidget extends ChartWidget
                 'y' => ['beginAtZero' => true],
             ],
         ];
+    }
+
+    public static function canView(): bool
+    {
+        return static::userCanView(Auth::user());
+    }
+
+    protected static function userCanView(?User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        return $user->hasAnyRole(['admin', 'superadmin', 'owner']);
     }
 }

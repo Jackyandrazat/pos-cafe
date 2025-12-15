@@ -2,12 +2,15 @@
 
 namespace App\Filament\Widgets;
 
-use Illuminate\Support\Facades\DB;
+use App\Models\User;
 use Filament\Widgets\ChartWidget;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class TopSellingProductsWidget extends ChartWidget
 {
     protected static ?string $heading = 'Produk Paling Laris';
+    protected static ?int $sort = 8;
 
     protected function getType(): string
     {
@@ -45,5 +48,19 @@ class TopSellingProductsWidget extends ChartWidget
                 'y' => ['display' => false],
             ],
         ];
+    }
+
+    public static function canView(): bool
+    {
+        return static::userCanView(Auth::user());
+    }
+
+    protected static function userCanView(?User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        return $user->hasAnyRole(['admin', 'superadmin', 'owner']);
     }
 }
