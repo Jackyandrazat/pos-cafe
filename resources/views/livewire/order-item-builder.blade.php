@@ -32,6 +32,25 @@
         </div>
     </div>
 
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Pilih Topping (opsional)</label>
+        @if ($toppings->isEmpty())
+            <p class="text-sm text-gray-500 border border-dashed border-gray-300 rounded-md p-3">
+                Belum ada topping tersedia. Tambahkan topping terlebih dahulu melalui backend.
+            </p>
+        @else
+            <div class="border border-gray-200 rounded-md p-3 max-h-40 overflow-y-auto flex flex-wrap gap-3 text-sm">
+                @foreach ($toppings as $topping)
+                    <label class="inline-flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-full px-3 py-1">
+                        <input type="checkbox" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                               wire:model="selectedToppingIds" value="{{ $topping->id }}">
+                        <span class="text-gray-700">{{ $topping->name }} (Rp{{ number_format($topping->price) }})</span>
+                    </label>
+                @endforeach
+            </div>
+        @endif
+    </div>
+
     {{-- List Produk Dipesan --}}
     <div class="grid grid-cols-3 gap-4">
         @foreach ($selectedItems as $index => $item)
@@ -40,6 +59,21 @@
                 <div>Qty: {{ $item['qty'] }}</div>
                 <div>Harga: Rp{{ number_format($item['price']) }}</div>
                 <div>Diskon: Rp{{ number_format($item['discount']) }}</div>
+                @if (!empty($item['toppings']))
+                    <div class="mt-2">
+                        <div class="text-xs font-semibold text-gray-600">Topping:</div>
+                        <ul class="mt-1 text-xs text-gray-600 list-disc pl-4 space-y-0.5">
+                            @foreach ($item['toppings'] as $topping)
+                                <li>
+                                    {{ $topping['name'] }} (Rp{{ number_format($topping['price']) }} x {{ $topping['quantity'] }})
+                                </li>
+                            @endforeach
+                        </ul>
+                        <div class="text-sm font-semibold text-gray-700 mt-2">
+                            Total Topping: Rp{{ number_format($item['toppings_total'] ?? 0) }}
+                        </div>
+                    </div>
+                @endif
                 <div class="font-semibold">Subtotal: Rp{{ number_format($item['subtotal']) }}</div>
                 <button type="button" wire:click="removeItem({{ $index }})"
                         class="text-red-600 text-xs mt-2 underline">Hapus</button>

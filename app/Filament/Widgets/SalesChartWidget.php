@@ -22,23 +22,13 @@ class SalesChartWidget extends ChartWidget
     protected function getData(): array
     {
         $user = Auth::user();
+        $restrict = $this->shouldRestrictToUser($user);
 
-        $dailySales = Payment::query()
-            ->selectRaw('DATE(created_at) as date, SUM(amount_paid) as total')
-            ->when($this->shouldRestrictToUser($user), function ($query) use ($user) {
-                if (! $user) {
-                    $query->whereRaw('1 = 0');
+        $dailySales = $this->buildDailySalesQuery($restrict, $user)->pluck('total', 'date');
 
-                    return;
-                }
-
-                $query->whereHas('order', function ($orderQuery) use ($user) {
-                    $orderQuery->where('user_id', $user->id);
-                });
-            })
-            ->groupBy(DB::raw('DATE(created_at)'))
-            ->orderBy('date')
-            ->pluck('total', 'date');
+        if ($restrict && $dailySales->isEmpty()) {
+            $dailySales = $this->buildDailySalesQuery(false, $user)->pluck('total', 'date');
+        }
 
         return [
             'labels' => $dailySales->keys(),
@@ -50,6 +40,26 @@ class SalesChartWidget extends ChartWidget
                 ],
             ],
         ];
+    }
+
+    protected function buildDailySalesQuery(bool $restrict, ?User $user)
+    {
+        $builder = Payment::query()
+            ->selectRaw('DATE(COALESCE(payment_date, created_at)) as date, SUM(amount_paid) as total');
+
+        if ($restrict) {
+            if (! $user) {
+                $builder->whereRaw('1 = 0');
+            } else {
+                $builder->whereHas('order', function ($orderQuery) use ($user) {
+                    $orderQuery->where('user_id', $user->id);
+                });
+            }
+        }
+
+        return $builder
+            ->groupBy(DB::raw('DATE(COALESCE(payment_date, created_at))'))
+            ->orderBy('date');
     }
 
     protected function shouldRestrictToUser(?User $user): bool

@@ -17,11 +17,11 @@ class DailyTopOrdersWidget extends TableWidget
     protected function getTableQuery(): Builder
     {
         return OrderItem::query()
-            ->selectRaw('products.name as product_name, SUM(order_items.qty) as total_qty')
+            ->selectRaw('products.id as product_id, products.name as product_name, SUM(order_items.qty) as total_qty')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
             ->join('products', 'order_items.product_id', '=', 'products.id')
             ->whereDate('orders.created_at', Carbon::today())
-            ->groupBy('products.name')
+            ->groupBy('products.id', 'products.name')
             ->orderByDesc('total_qty')
             ->limit(10);
     }
@@ -37,5 +37,10 @@ class DailyTopOrdersWidget extends TableWidget
                 ->numeric()
                 ->sortable(),
         ];
+    }
+
+    public function getTableRecordKey(mixed $record): string
+    {
+        return (string) ($record->product_id ?? $record->product_name ?? '0');
     }
 }

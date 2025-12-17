@@ -5,6 +5,7 @@ namespace App\Filament\Resources\OrderResource\Pages;
 use App\Models\Order;
 use Filament\Actions;
 use App\Models\OrderItem;
+use Illuminate\Support\Facades\Auth;
 use App\Services\StockValidationService;
 use Filament\Notifications\Notification;
 use App\Filament\Resources\OrderResource;
@@ -61,7 +62,7 @@ class CreateOrder extends CreateRecord
         $items = session('selected_order_items', []);
 
         foreach ($items as $item) {
-            OrderItem::create([
+            $orderItem = OrderItem::create([
                 'order_id' => $this->record->id,
                 'product_id' => $item['product_id'],
                 'qty' => $item['qty'],
@@ -69,6 +70,18 @@ class CreateOrder extends CreateRecord
                 'discount_amount' => $item['discount'],
                 'subtotal' => $item['subtotal'],
             ]);
+
+            foreach ($item['toppings'] ?? [] as $topping) {
+                $quantity = $topping['quantity'] ?? $item['qty'] ?? 1;
+                $price = $topping['price'] ?? 0;
+                $orderItem->toppings()->create([
+                    'topping_id' => $topping['id'] ?? null,
+                    'name' => $topping['name'] ?? 'Topping',
+                    'price' => $price,
+                    'quantity' => $quantity,
+                    'total' => $topping['total'] ?? ($price * $quantity),
+                ]);
+            }
         }
 
         session()->forget('selected_order_items');
@@ -79,6 +92,7 @@ class CreateOrder extends CreateRecord
         $items = session('selected_order_items', []);
         $data['subtotal_order'] = collect($items)->sum('subtotal');
         $data['total_order'] = max($data['subtotal_order'] - ($data['discount_order'] ?? 0), 0);
+        $data['user_id'] = $data['user_id'] ?? Auth::id();
         return $data;
     }
 }

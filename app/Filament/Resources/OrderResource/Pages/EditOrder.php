@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\OrderResource\Pages;
 
 use Filament\Actions;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Filament\Resources\Pages\EditRecord;
 use App\Filament\Resources\OrderResource;
@@ -33,13 +34,25 @@ class EditOrder extends EditRecord
 
             // Simpan ulang item yang baru
             foreach ($items as $item) {
-                $order->order_items()->create([
+                $orderItem = $order->order_items()->create([
                     'product_id' => $item['product_id'],
                     'qty' => $item['qty'],
                     'price' => $item['price'],
                     'discount_amount' => $item['discount'] ?? 0,
                     'subtotal' => $item['subtotal'],
                 ]);
+
+                foreach ($item['toppings'] ?? [] as $topping) {
+                    $quantity = $topping['quantity'] ?? $item['qty'] ?? 1;
+                    $price = $topping['price'] ?? 0;
+                    $orderItem->toppings()->create([
+                        'topping_id' => $topping['id'] ?? null,
+                        'name' => $topping['name'] ?? 'Topping',
+                        'price' => $price,
+                        'quantity' => $quantity,
+                        'total' => $topping['total'] ?? ($price * $quantity),
+                    ]);
+                }
             }
         });
 
@@ -52,6 +65,7 @@ class EditOrder extends EditRecord
         $items = session('selected_order_items', []);
         $data['subtotal_order'] = collect($items)->sum('subtotal');
         $data['total_order'] = max($data['subtotal_order'] - ($data['discount_order'] ?? 0), 0);
+        $data['user_id'] = $data['user_id'] ?? $this->record->user_id ?? Auth::id();
         return $data;
     }
 
