@@ -162,7 +162,11 @@
                                         @if ($menuCount > 0)
                                             <ul class="space-y-1 rounded-2xl border border-white/5 bg-white/5 p-3 text-white/80">
                                                 @foreach ($previewItems as $item)
-                                                    <li class="flex items-center justify-between text-xs font-medium sm:text-sm">
+                                                    <li
+                                                        wire:click="openOrderDetailModal({{ $order->id }})"
+                                                        class="flex cursor-pointer items-center justify-between rounded-xl px-2 py-1 text-xs font-medium transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/40 sm:text-sm"
+                                                        title="{{ __('Lihat detail order') }}"
+                                                    >
                                                         <span class="flex-1 truncate pr-2">{{ $item->product->name ?? $item->product_name ?? 'Menu #' . $item->id }}</span>
                                                         <span class="text-white/40">×{{ $item->qty ?? 0 }}</span>
                                                     </li>
@@ -179,7 +183,11 @@
                                                     <h4 class="text-xs font-semibold uppercase tracking-[0.2em] text-amber-200">Daftar Menu Lengkap</h4>
                                                     <ul class="mt-3 space-y-1 text-xs font-medium sm:text-sm">
                                                         @foreach ($menuItems as $item)
-                                                            <li class="flex items-center justify-between">
+                                                            <li
+                                                                wire:click="openOrderDetailModal({{ $order->id }})"
+                                                                class="flex cursor-pointer items-center justify-between rounded-xl px-2 py-1 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/40"
+                                                                title="{{ __('Lihat detail order') }}"
+                                                            >
                                                                 <span class="flex-1 truncate pr-2">{{ $item->product->name ?? $item->product_name ?? 'Menu #' . $item->id }}</span>
                                                                 <span class="text-white/40">×{{ $item->qty ?? 0 }}</span>
                                                             </li>
@@ -235,4 +243,117 @@
             </div>
         @endif
     </div>
+
+    @if ($detailOrderId)
+        @php
+            $modalId = 'order-detail-modal';
+            $detailStatusStyle = $statusStyles[$detailOrderMeta['status'] ?? ''] ?? 'border-gray-200 bg-gray-100 text-gray-700';
+        @endphp
+
+        <div
+            x-data="{
+                show: @js($isDetailModalOpen),
+                close() {
+                    this.show = false;
+                    $wire.closeOrderDetailModal();
+                }
+            }"
+            x-cloak
+            x-show="show"
+            x-transition.opacity.duration.200ms
+            id="{{ $modalId }}"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 px-4 py-6 backdrop-blur"
+        >
+            <div
+                x-show="show"
+                x-transition.scale.origin-center.duration.200ms
+                @click.away="close()"
+                class="relative w-full max-w-4xl rounded-3xl border border-white/10 bg-white p-6 text-gray-900 shadow-2xl"
+            >
+                <div class="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 pb-4">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">{{ __('Order #:number', ['number' => $detailOrderMeta['order_number'] ?? '-']) }}</p>
+                        <h2 class="mt-1 text-2xl font-semibold text-gray-900">{{ $detailOrderMeta['customer_name'] ?? 'Tamu' }}</h2>
+                        <p class="text-sm text-gray-500">
+                            {{ $detailOrderMeta['order_type_label'] ?? '' }} •
+                            {{ $detailOrderMeta['table_number'] ? __('Meja :number', ['number' => $detailOrderMeta['table_number']]) : __('Tanpa meja') }}
+                        </p>
+                    </div>
+                    <span class="inline-flex items-center rounded-full border px-4 py-1 text-sm font-semibold uppercase tracking-wide {{ $detailStatusStyle }}">
+                        {{ $detailOrderMeta['status_label'] ?? __('orders.status.unknown') }}
+                    </span>
+                </div>
+
+                <div class="mt-6 space-y-6">
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">{{ __('Total Bayar') }}</p>
+                            <p class="mt-2 text-3xl font-bold text-amber-600">{{ Number::currency($detailOrderMeta['total_order'] ?? 0, 'IDR', locale: 'id') }}</p>
+                        </div>
+                        <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">{{ __('Waktu Order') }}</p>
+                            <p class="mt-2 text-base font-semibold">{{ $detailOrderMeta['created_at'] ?? '-' }}</p>
+                        </div>
+                    </div>
+
+                    <div class="max-h-[50vh] overflow-y-auto rounded-2xl border border-gray-200 bg-white p-4">
+                        <h3 class="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">{{ __('Detail Menu & Topping') }}</h3>
+
+                        <div class="mt-4 space-y-4">
+                            @forelse ($detailOrderItems as $item)
+                                <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                                    <div class="flex flex-wrap items-start justify-between gap-3">
+                                        <div>
+                                            <p class="text-base font-semibold text-gray-900">{{ $item['name'] }}</p>
+                                            <p class="text-sm text-gray-600">×{{ $item['qty'] }} • {{ Number::currency($item['price'], 'IDR', locale: 'id') }}</p>
+                                        </div>
+                                        <p class="text-base font-semibold text-amber-600">{{ Number::currency($item['subtotal'], 'IDR', locale: 'id') }}</p>
+                                    </div>
+
+                                    @if (! empty($item['toppings']))
+                                        <div class="mt-3 rounded-2xl border border-amber-200 bg-amber-50 p-3">
+                                            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">{{ __('Topping') }}</p>
+                                            <ul class="mt-2 space-y-1 text-sm text-amber-900">
+                                                @foreach ($item['toppings'] as $topping)
+                                                    <li class="flex flex-wrap items-center justify-between gap-2">
+                                                        <span>{{ $topping['name'] }}</span>
+                                                        <span class="text-sm text-amber-800">×{{ $topping['quantity'] }} • {{ Number::currency($topping['price'], 'IDR', locale: 'id') }}</span>
+                                                    </li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                    @else
+                                        <p class="mt-3 text-xs text-gray-500">{{ __('Tidak ada topping untuk menu ini.') }}</p>
+                                    @endif
+                                </div>
+                            @empty
+                                <p class="text-sm text-gray-500">{{ __('Belum ada item pada order ini.') }}</p>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex flex-col gap-3 border-t border-gray-100 pt-4 sm:flex-row sm:justify-end">
+                    <x-filament::button color="gray" x-on:click="close()">{{ __('Tutup') }}</x-filament::button>
+                    <x-filament::button
+                        tag="a"
+                        color="primary"
+                        :href="\App\Filament\Resources\OrderResource::getUrl('edit', ['record' => $detailOrderId])"
+                    >
+                        {{ __('Kelola Order') }}
+                    </x-filament::button>
+                </div>
+
+                <button
+                    type="button"
+                    class="absolute right-4 top-4 text-gray-400 transition hover:text-gray-600"
+                    x-on:click="close()"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    @endif
 </x-filament-panels::page>

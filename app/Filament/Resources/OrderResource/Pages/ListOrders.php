@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\OrderResource\Pages;
 
 use App\Filament\Resources\OrderResource;
+use App\Models\Order;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Collection;
@@ -21,6 +22,14 @@ class ListOrders extends ListRecords
     public string $cardSearch = '';
 
     protected int $cardViewLimit = 24;
+
+    public bool $isDetailModalOpen = false;
+
+    public ?int $detailOrderId = null;
+
+    public array $detailOrderMeta = [];
+
+    public array $detailOrderItems = [];
 
     protected function getHeaderActions(): array
     {
@@ -41,7 +50,7 @@ class ListOrders extends ListRecords
     public function getCardOrdersProperty(): Collection
     {
         $query = (clone $this->getFilteredSortedTableQuery())
-            ->with(['table', 'order_items.product'])
+            ->with(['table', 'order_items.product', 'order_items.toppings'])
             ->withCount('order_items');
 
         $search = trim($this->cardSearch);
@@ -66,6 +75,53 @@ class ListOrders extends ListRecords
         return $query
             ->limit($this->cardViewLimit)
             ->get();
+    }
+
+    public function openOrderDetailModal(int $orderId): void
+    {
+        $order = (clone $this->getFilteredSortedTableQuery())
+            ->with(['table', 'order_items.product', 'order_items.toppings'])
+            ->find($orderId);
+
+        if (! $order instanceof Order) {
+            return;
+        }
+
+        $this->detailOrderId = $order->id;
+        $this->detailOrderMeta = [
+            'order_number' => $order->id,
+            'customer_name' => $order->customer_name ?: __('Tamu'),
+            'status' => $order->status,
+            'status_label' => __('orders.status.' . ($order->status ?? 'unknown')),
+            'order_type_label' => $this->getOrderTypeLabel($order->order_type),
+            'table_number' => optional($order->table)->table_number,
+            'total_order' => $order->total_order ?? 0,
+            'created_at' => optional($order->created_at)?->timezone(config('app.timezone'))?->translatedFormat('d M Y • H:i'),
+        ];
+        $this->detailOrderItems = $order->order_items->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'name' => $item->product->name ?? $item->product_name ?? 'Menu #' . $item->id,
+                'qty' => $item->qty ?? 0,
+                'price' => $item->price ?? 0,
+                'subtotal' => $item->subtotal ?? 0,
+                'toppings' => $item->toppings?->map(function ($topping) {
+                    return [
+                        'name' => $topping->name,
+                        'quantity' => $topping->quantity,
+                        'price' => $topping->price,
+                        'total' => $topping->total,
+                    ];
+                })->values()->toArray() ?? [],
+            ];
+        })->toArray();
+
+        $this->isDetailModalOpen = true;
+    }
+
+    public function closeOrderDetailModal(): void
+    {
+        $this->reset('detailOrderId', 'detailOrderMeta', 'detailOrderItems', 'isDetailModalOpen');
     }
 
     public function getOrderTypeLabel(?string $type): string
