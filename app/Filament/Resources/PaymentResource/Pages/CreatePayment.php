@@ -2,13 +2,16 @@
 
 namespace App\Filament\Resources\PaymentResource\Pages;
 
+use App\Models\Shift;
 use Filament\Actions;
+use App\Models\Payment;
 use App\Services\StockService;
 use Filament\Notifications\Notification;
 use App\Notifications\PaymentNotification;
 use Filament\Resources\Pages\CreateRecord;
 use App\Filament\Resources\PaymentResource;
-use App\Models\Payment;
+use Filament\Support\Exceptions\Halt;
+use Illuminate\Validation\ValidationException;
 
 class CreatePayment extends CreateRecord
 {
@@ -17,14 +20,27 @@ class CreatePayment extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['payment_date'] = now();
-        $activeShift = \App\Models\Shift::whereNull('shift_close_time')->orderBy('id', 'desc')->first();
-        // dd($activeShift->id);
+        $user = auth()->user();
+        $activeShift = $user->activeShift();
+
+        if (! $activeShift) {
+            Notification::make()
+                ->danger()
+                ->title('Shift belum dibuka')
+                ->body('Kasir harus membuka shift sebelum membuat pembayaran.')
+                ->send();
+
+            $this->addError('order_id', 'Kasir harus membuka shift sebelum membuat pembayaran.');
+
+            throw new Halt();
+        }
+
         $data['shift_id'] = $activeShift->id;
         $orderForPaymentExist = \App\Models\Order::find($data['order_id'] ?? null);
 
         if ($orderForPaymentExist && $orderForPaymentExist->status === 'completed') {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'order_id' => 'Order sudah selesai, tidak bisa dibuat pembayaran.'
+            throw ValidationException::withMessages([
+                'order_id' => 'Order sudah selesai, tidak bisa dibuat pembayaran.',
             ]);
         }
         return $data;

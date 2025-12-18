@@ -58,6 +58,19 @@ class User extends Authenticatable
         return $this->hasMany(Order::class);
     }
 
+    public function shifts()
+    {
+        return $this->hasMany(Shift::class);
+    }
+
+    public function activeShift(): ?Shift
+    {
+        return $this->shifts()
+            ->whereNull('shift_close_time')
+            ->latest('shift_open_time')
+            ->first();
+    }
+
     public function roles()
     {
         return $this->belongsToMany(Role::class);

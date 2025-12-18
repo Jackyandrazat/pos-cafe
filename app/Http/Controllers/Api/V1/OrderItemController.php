@@ -10,6 +10,7 @@ use App\Http\Resources\Api\V1\OrderItemResource;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Services\ShiftGuard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -95,6 +96,8 @@ class OrderItemController extends Controller
         if ($order->user_id !== $user->id) {
             abort(Response::HTTP_FORBIDDEN, 'You do not have access to this order.');
         }
+
+        ShiftGuard::ensureActiveShift($user);
 
         if ($order->status !== OrderStatus::Draft->value) {
             abort(Response::HTTP_UNPROCESSABLE_ENTITY, 'Only draft orders can be modified.');

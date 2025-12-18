@@ -8,6 +8,7 @@ use App\Http\Requests\Api\V1\StorePaymentRequest;
 use App\Http\Resources\Api\V1\PaymentResource;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Services\ShiftGuard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -24,7 +25,9 @@ class PaymentController extends Controller
 
     public function store(StorePaymentRequest $request, Order $order): JsonResponse
     {
-        $this->ensureOrderOwner($request->user(), $order);
+        $user = $request->user();
+        $this->ensureOrderOwner($user, $order);
+        $shift = ShiftGuard::ensureActiveShift($user);
 
         $data = $request->validated();
 
@@ -53,6 +56,7 @@ class PaymentController extends Controller
             'amount_paid' => $amount,
             'change_return' => $change,
             'payment_date' => now(),
+            'shift_id' => $shift?->id,
         ]);
 
         if (($due - $amount) <= 0 && $order->status !== OrderStatus::Completed->value) {

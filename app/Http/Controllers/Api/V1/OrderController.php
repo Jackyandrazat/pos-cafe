@@ -8,6 +8,7 @@ use App\Http\Requests\Api\V1\StoreOrderRequest;
 use App\Http\Resources\Api\V1\OrderResource;
 use App\Models\Order;
 use App\Models\Product;
+use App\Services\ShiftGuard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -37,6 +38,7 @@ class OrderController extends Controller
     {
         $data = $request->validated();
         $user = $request->user();
+        ShiftGuard::ensureActiveShift($user);
 
         $order = DB::transaction(function () use ($data, $user) {
             $order = Order::create([
@@ -96,7 +98,9 @@ class OrderController extends Controller
 
     public function submit(Request $request, Order $order): OrderResource
     {
-        $this->ensureOrderOwner($request->user(), $order);
+        $user = $request->user();
+        $this->ensureOrderOwner($user, $order);
+        ShiftGuard::ensureActiveShift($user);
 
         if ($order->status !== OrderStatus::Draft->value) {
             abort(Response::HTTP_UNPROCESSABLE_ENTITY, 'Only draft orders can be submitted.');
@@ -115,7 +119,9 @@ class OrderController extends Controller
 
     public function cancel(Request $request, Order $order): OrderResource
     {
-        $this->ensureOrderOwner($request->user(), $order);
+        $user = $request->user();
+        $this->ensureOrderOwner($user, $order);
+        ShiftGuard::ensureActiveShift($user);
 
         $currentStatus = (string) $order->status;
 
