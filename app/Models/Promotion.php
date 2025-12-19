@@ -60,19 +60,16 @@ class Promotion extends Model
         }
 
         if ($this->starts_at && $now->lt($this->starts_at)) {
-            dd('here');
             return false;
         }
 
         $endsAt = $this->ends_at?->copy();
 
         if ($endsAt && $endsAt->isStartOfDay()) {
-            dd('there');
             $endsAt = $endsAt->endOfDay();
         }
 
         if ($endsAt && $now->gt($endsAt)) {
-            dd('everywhere');
             return false;
         }
 

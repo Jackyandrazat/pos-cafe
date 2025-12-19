@@ -25,4 +25,9 @@ class Ingredient extends Model
     {
         return $this->hasMany(ProductIngredient::class);
     }
+
+    public function wastes()
+    {
+        return $this->hasMany(IngredientWaste::class);
+    }
 }
