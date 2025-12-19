@@ -29,7 +29,7 @@ class OrderPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasRole('admin') || $user->hasRole('kasir');
+        return $user->hasRole('admin') || $user->hasRole('kasir') || $user->hasRole('owner');
     }
 
     /**
@@ -37,7 +37,7 @@ class OrderPolicy
      */
     public function update(User $user, Order $order): bool
     {
-        return $user->hasRole('admin') || $user->hasRole('kasir');
+        return $user->hasRole('admin') || $user->hasRole('kasir') || $user->hasRole('owner');
     }
 
     /**

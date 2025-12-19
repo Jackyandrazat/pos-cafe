@@ -2,15 +2,17 @@
 
 namespace App\Filament\Resources\OrderResource\Pages;
 
-use App\Models\Order;
-use Filament\Actions;
-use App\Models\OrderItem;
-use Illuminate\Support\Facades\Auth;
-use App\Services\StockValidationService;
-use Filament\Notifications\Notification;
-use App\Filament\Resources\OrderResource;
-use Filament\Resources\Pages\CreateRecord;
+use App\Exceptions\PromotionException;
 use App\Exceptions\StockValidationException;
+use App\Filament\Resources\OrderResource;
+use App\Models\Order;
+use App\Models\OrderItem;
+use App\Services\PromotionService;
+use App\Services\StockValidationService;
+use Filament\Actions;
+use Filament\Notifications\Notification;
+use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
 class CreateOrder extends CreateRecord
@@ -84,6 +86,8 @@ class CreateOrder extends CreateRecord
             }
         }
 
+        PromotionService::syncUsage($this->record);
+
         session()->forget('selected_order_items');
     }
 
@@ -91,8 +95,42 @@ class CreateOrder extends CreateRecord
     {
         $items = session('selected_order_items', []);
         $data['subtotal_order'] = collect($items)->sum('subtotal');
-        $data['total_order'] = max($data['subtotal_order'] - ($data['discount_order'] ?? 0), 0);
+        $manualDiscount = max((float) ($data['discount_order'] ?? 0), 0);
+
+        try {
+            $promotionResult = PromotionService::validateAndCalculate(
+                $data['promotion_code'] ?? null,
+                $data['subtotal_order'],
+                Auth::user(),
+            );
+        } catch (PromotionException $e) {
+            report($e);
+
+            Notification::make()
+                ->title('Kode Promo Gagal Digunakan')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+
+            throw ValidationException::withMessages([
+                'promotion_code' => $e->getMessage(),
+            ]);
+        }
+
+        if ($promotionResult) {
+            $data['promotion_id'] = $promotionResult['promotion']->id;
+            $data['promotion_code'] = $promotionResult['code'];
+            $data['promotion_discount'] = $promotionResult['discount'];
+        } else {
+            $data['promotion_id'] = null;
+            $data['promotion_code'] = null;
+            $data['promotion_discount'] = 0;
+        }
+
+        $promoDiscount = (float) ($data['promotion_discount'] ?? 0);
+        $data['total_order'] = max($data['subtotal_order'] - $manualDiscount - $promoDiscount, 0);
         $data['user_id'] = $data['user_id'] ?? Auth::id();
+
         return $data;
     }
 }

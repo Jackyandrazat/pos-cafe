@@ -2,11 +2,15 @@
 
 namespace App\Filament\Resources\OrderResource\Pages;
 
+use App\Exceptions\PromotionException;
+use App\Filament\Resources\OrderResource;
+use App\Services\PromotionService;
 use Filament\Actions;
+use Filament\Notifications\Notification;
+use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Filament\Resources\Pages\EditRecord;
-use App\Filament\Resources\OrderResource;
+use Illuminate\Validation\ValidationException;
 
 class EditOrder extends EditRecord
 {
@@ -57,6 +61,8 @@ class EditOrder extends EditRecord
         });
 
         // Clear session setelah simpan
+        PromotionService::syncUsage($order);
+
         session()->forget('selected_order_items');
     }
 
@@ -64,8 +70,43 @@ class EditOrder extends EditRecord
     {
         $items = session('selected_order_items', []);
         $data['subtotal_order'] = collect($items)->sum('subtotal');
-        $data['total_order'] = max($data['subtotal_order'] - ($data['discount_order'] ?? 0), 0);
+        $manualDiscount = max((float) ($data['discount_order'] ?? 0), 0);
+
+        try {
+            $promotionResult = PromotionService::validateAndCalculate(
+                $data['promotion_code'] ?? null,
+                $data['subtotal_order'],
+                $this->record->user ?? Auth::user(),
+                $this->record->id,
+            );
+        } catch (PromotionException $e) {
+            report($e);
+
+            Notification::make()
+                ->title('Kode Promo Gagal Digunakan')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+
+            throw ValidationException::withMessages([
+                'promotion_code' => $e->getMessage(),
+            ]);
+        }
+
+        if ($promotionResult) {
+            $data['promotion_id'] = $promotionResult['promotion']->id;
+            $data['promotion_code'] = $promotionResult['code'];
+            $data['promotion_discount'] = $promotionResult['discount'];
+        } else {
+            $data['promotion_id'] = null;
+            $data['promotion_code'] = null;
+            $data['promotion_discount'] = 0;
+        }
+
+        $promoDiscount = (float) ($data['promotion_discount'] ?? 0);
+        $data['total_order'] = max($data['subtotal_order'] - $manualDiscount - $promoDiscount, 0);
         $data['user_id'] = $data['user_id'] ?? $this->record->user_id ?? Auth::id();
+
         return $data;
     }
 

@@ -18,12 +18,21 @@ class Order extends Model
         'status',
         'subtotal_order',
         'discount_order',
+        'promotion_id',
+        'promotion_code',
+        'promotion_discount',
         'service_fee_order',
         'total_order',
         'notes',
     ];
 
-    protected $casts = [];
+    protected $casts = [
+        'subtotal_order' => 'float',
+        'discount_order' => 'float',
+        'promotion_discount' => 'float',
+        'service_fee_order' => 'float',
+        'total_order' => 'float',
+    ];
 
     // Relasi ke meja
     public function table()
@@ -48,6 +57,11 @@ class Order extends Model
         return $this->hasMany(Payment::class, 'order_id');
     }
 
+    public function promotion()
+    {
+        return $this->belongsTo(Promotion::class);
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -70,6 +84,7 @@ class Order extends Model
     {
         $subtotal = $this->items()->sum('subtotal');
         $discount = (float) ($this->getAttribute('discount_order') ?? $this->getAttribute('discount_amount') ?? 0);
+        $promoDiscount = (float) ($this->getAttribute('promotion_discount') ?? 0);
         $serviceFee = (float) ($this->getAttribute('service_fee_order') ?? 0);
 
         if (array_key_exists('subtotal_order', $this->attributes)) {
@@ -78,7 +93,7 @@ class Order extends Model
             $this->setAttribute('subtotal', $subtotal);
         }
 
-        $grandTotal = $subtotal - $discount + $serviceFee;
+        $grandTotal = max($subtotal - $discount - $promoDiscount + $serviceFee, 0);
 
         if (array_key_exists('total_order', $this->attributes)) {
             $this->setAttribute('total_order', $grandTotal);

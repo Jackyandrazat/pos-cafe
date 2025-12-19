@@ -61,14 +61,36 @@ class OrderResource extends Resource
                 ->default(0),
 
             Forms\Components\TextInput::make('discount_order')
-                ->label('Diskon Order')
+                ->label('Diskon Manual')
                 ->numeric()
                 ->default(0)
                 ->reactive()
                 ->afterStateUpdated(function (callable $set, callable $get, $state) {
                     $subtotal = $get('subtotal_order') ?? 0;
-                    $set('total_order', max($subtotal - $state, 0));
+                    $promoDiscount = $get('promotion_discount') ?? 0;
+                    $set('total_order', max($subtotal - $state - $promoDiscount, 0));
                 }),
+
+            Forms\Components\TextInput::make('promotion_code')
+                ->label('Kode Promo / Voucher')
+                ->maxLength(50)
+                ->helperText('Masukkan kode promo jika ada. Validasi akan dilakukan saat order disimpan.')
+                ->formatStateUsing(fn (?string $state) => $state ? strtoupper($state) : $state)
+                ->dehydrateStateUsing(fn (?string $state) => $state ? strtoupper($state) : $state),
+
+            Forms\Components\TextInput::make('promotion_discount')
+                ->label('Diskon Promo')
+                ->numeric()
+                ->default(0)
+                ->disabled()
+                ->dehydrated(false)
+                ->reactive()
+                ->afterStateUpdated(function (callable $set, callable $get, $state) {
+                    $subtotal = $get('subtotal_order') ?? 0;
+                    $manual = $get('discount_order') ?? 0;
+                    $set('total_order', max($subtotal - $manual - ($state ?? 0), 0));
+                })
+                ->helperText('Terisi otomatis setelah promo valid.'),
 
             Forms\Components\TextInput::make('total_order')
                 ->label('Total Bayar')
@@ -99,6 +121,11 @@ class OrderResource extends Resource
                     ->label('Total')
                     ->money('IDR')
                     ->sortable(),
+
+                Tables\Columns\TextColumn::make('promotion_code')
+                    ->label('Kode Promo')
+                    ->placeholder('-')
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\BadgeColumn::make('status')
                     ->label('Status')
