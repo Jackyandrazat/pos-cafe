@@ -34,6 +34,16 @@ class OrderResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
+            Forms\Components\Select::make('customer_id')
+                ->label('Customer')
+                ->relationship('customer', 'name')
+                ->searchable()
+                ->createOptionForm([
+                    Forms\Components\TextInput::make('name')->required(),
+                    Forms\Components\TextInput::make('email')->email()->nullable(),
+                    Forms\Components\TextInput::make('phone')->tel()->nullable(),
+                ])
+                ->helperText('Opsional, bisa pilih customer untuk loyalty.'),
             Forms\Components\Select::make('table_id')
                 ->label('Meja (Opsional)')
                 ->relationship('table', 'table_number')
@@ -116,6 +126,9 @@ class OrderResource extends Resource
                 Tables\Columns\TextColumn::make('table.table_number')
                     ->label('Meja')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('customer.name')
+                    ->label('Customer')
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('total_order')
                     ->label('Total')

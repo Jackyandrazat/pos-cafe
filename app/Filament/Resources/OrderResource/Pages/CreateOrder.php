@@ -8,6 +8,7 @@ use App\Filament\Resources\OrderResource;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Services\PromotionService;
+use App\Services\LoyaltyService;
 use App\Services\StockValidationService;
 use Filament\Actions;
 use Filament\Notifications\Notification;
@@ -59,6 +60,7 @@ class CreateOrder extends CreateRecord
             ]);
         }
     }
+
     protected function afterCreate(): void
     {
         $items = session('selected_order_items', []);
@@ -89,6 +91,9 @@ class CreateOrder extends CreateRecord
         PromotionService::syncUsage($this->record);
 
         session()->forget('selected_order_items');
+
+        $this->record->load('customer');
+        app(LoyaltyService::class)->rewardOrderPoints($this->record);
     }
 
     protected function mutateFormDataBeforeCreate(array $data): array
