@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\TableQueueEntryResource\Pages;
 use App\Models\CafeTable;
 use App\Models\TableQueueEntry;
+use App\Support\Feature;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -94,5 +95,35 @@ class TableQueueEntryResource extends Resource
             'create' => Pages\CreateTableQueueEntry::route('/create'),
             'edit' => Pages\EditTableQueueEntry::route('/{record}/edit'),
         ];
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return Feature::enabled('table_management');
+    }
+
+    public static function canViewAny(): bool
+    {
+        return Feature::enabled('table_management');
+    }
+
+    public static function canCreate(): bool
+    {
+        return Feature::enabled('table_management');
+    }
+
+    public static function canEdit($record): bool
+    {
+        return Feature::enabled('table_management');
+    }
+
+    public static function canDelete($record): bool
+    {
+        return Feature::enabled('table_management');
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return Feature::enabled('table_management');
     }
 }

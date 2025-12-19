@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\TableResource\Pages;
 use App\Filament\Resources\TableResource\RelationManagers;
 use App\Models\CafeTable as TableModel;
+use App\Support\Feature;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -132,6 +133,37 @@ class TableResource extends Resource
             'edit' => Pages\EditTable::route('/{record}/edit'),
         ];
     }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return Feature::enabled('table_management');
+    }
+
+    public static function canViewAny(): bool
+    {
+        return Feature::enabled('table_management');
+    }
+
+    public static function canCreate(): bool
+    {
+        return Feature::enabled('table_management');
+    }
+
+    public static function canEdit($record): bool
+    {
+        return Feature::enabled('table_management');
+    }
+
+    public static function canDelete($record): bool
+    {
+        return Feature::enabled('table_management');
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return Feature::enabled('table_management');
+    }
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()

@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\GiftCardResource\Pages;
 use App\Filament\Resources\GiftCardResource\RelationManagers\TransactionsRelationManager;
 use App\Models\GiftCard;
+use App\Support\Feature;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -168,5 +169,35 @@ class GiftCardResource extends Resource
             'create' => Pages\CreateGiftCard::route('/create'),
             'edit' => Pages\EditGiftCard::route('/{record}/edit'),
         ];
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return Feature::enabled('gift_cards');
+    }
+
+    public static function canViewAny(): bool
+    {
+        return Feature::enabled('gift_cards');
+    }
+
+    public static function canCreate(): bool
+    {
+        return Feature::enabled('gift_cards');
+    }
+
+    public static function canEdit($record): bool
+    {
+        return Feature::enabled('gift_cards');
+    }
+
+    public static function canDelete($record): bool
+    {
+        return Feature::enabled('gift_cards');
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return Feature::enabled('gift_cards');
     }
 }

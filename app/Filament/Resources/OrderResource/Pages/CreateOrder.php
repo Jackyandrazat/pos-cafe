@@ -12,6 +12,7 @@ use App\Services\GiftCardService;
 use App\Services\PromotionService;
 use App\Services\LoyaltyService;
 use App\Services\StockValidationService;
+use App\Support\Feature;
 use Filament\Actions;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
@@ -92,14 +93,18 @@ class CreateOrder extends CreateRecord
             }
         }
 
-        PromotionService::syncUsage($this->record);
+        if (Feature::enabled('promotions')) {
+            PromotionService::syncUsage($this->record);
+        }
 
         session()->forget('selected_order_items');
 
-        $this->record->load('customer');
-        app(LoyaltyService::class)->rewardOrderPoints($this->record);
+        if (Feature::enabled('loyalty')) {
+            $this->record->load('customer');
+            app(LoyaltyService::class)->rewardOrderPoints($this->record);
+        }
 
-        if ($this->pendingGiftCardRedemption) {
+        if (Feature::enabled('gift_cards') && $this->pendingGiftCardRedemption) {
             /** @var GiftCardService $giftCardService */
             $giftCardService = app(GiftCardService::class);
 
@@ -136,75 +141,92 @@ class CreateOrder extends CreateRecord
         $data['subtotal_order'] = collect($items)->sum('subtotal');
         $manualDiscount = max((float) ($data['discount_order'] ?? 0), 0);
 
-        try {
-            $promotionResult = PromotionService::validateAndCalculate(
-                $data['promotion_code'] ?? null,
-                $data['subtotal_order'],
-                Auth::user(),
-            );
-        } catch (PromotionException $e) {
-            report($e);
+        $promoDiscount = 0;
+        $remainingAfterPromo = max($data['subtotal_order'] - $manualDiscount, 0);
 
-            Notification::make()
-                ->title('Kode Promo Gagal Digunakan')
-                ->body($e->getMessage())
-                ->danger()
-                ->send();
+        if (Feature::enabled('promotions')) {
+            try {
+                $promotionResult = PromotionService::validateAndCalculate(
+                    $data['promotion_code'] ?? null,
+                    $data['subtotal_order'],
+                    Auth::user(),
+                );
+            } catch (PromotionException $e) {
+                report($e);
 
-            throw ValidationException::withMessages([
-                'promotion_code' => $e->getMessage(),
-            ]);
-        }
+                Notification::make()
+                    ->title('Kode Promo Gagal Digunakan')
+                    ->body($e->getMessage())
+                    ->danger()
+                    ->send();
 
-        if ($promotionResult) {
-            $data['promotion_id'] = $promotionResult['promotion']->id;
-            $data['promotion_code'] = $promotionResult['code'];
-            $data['promotion_discount'] = $promotionResult['discount'];
+                throw ValidationException::withMessages([
+                    'promotion_code' => $e->getMessage(),
+                ]);
+            }
+
+            if ($promotionResult) {
+                $data['promotion_id'] = $promotionResult['promotion']->id;
+                $data['promotion_code'] = $promotionResult['code'];
+                $data['promotion_discount'] = $promotionResult['discount'];
+                $promoDiscount = (float) $promotionResult['discount'];
+            } else {
+                $data['promotion_id'] = null;
+                $data['promotion_code'] = null;
+                $data['promotion_discount'] = 0;
+            }
+
+            $remainingAfterPromo = max($data['subtotal_order'] - $manualDiscount - $promoDiscount, 0);
         } else {
             $data['promotion_id'] = null;
             $data['promotion_code'] = null;
             $data['promotion_discount'] = 0;
         }
 
-        $promoDiscount = (float) ($data['promotion_discount'] ?? 0);
-        $remainingAfterPromo = max($data['subtotal_order'] - $manualDiscount - $promoDiscount, 0);
+        $giftCardAmount = 0;
+        if (Feature::enabled('gift_cards')) {
+            $giftCardResult = null;
 
-        $giftCardResult = null;
+            try {
+                /** @var GiftCardService $giftCardService */
+                $giftCardService = app(GiftCardService::class);
+                $giftCardResult = $giftCardService->prepareRedemption(
+                    $data['gift_card_code'] ?? null,
+                    (float) ($data['gift_card_amount'] ?? 0),
+                    $remainingAfterPromo,
+                );
+            } catch (GiftCardException $e) {
+                report($e);
 
-        try {
-            /** @var GiftCardService $giftCardService */
-            $giftCardService = app(GiftCardService::class);
-            $giftCardResult = $giftCardService->prepareRedemption(
-                $data['gift_card_code'] ?? null,
-                (float) ($data['gift_card_amount'] ?? 0),
-                $remainingAfterPromo,
-            );
-        } catch (GiftCardException $e) {
-            report($e);
+                Notification::make()
+                    ->title('Gift Card Gagal Digunakan')
+                    ->body($e->getMessage())
+                    ->danger()
+                    ->send();
 
-            Notification::make()
-                ->title('Gift Card Gagal Digunakan')
-                ->body($e->getMessage())
-                ->danger()
-                ->send();
+                throw ValidationException::withMessages([
+                    'gift_card_code' => $e->getMessage(),
+                ]);
+            }
 
-            throw ValidationException::withMessages([
-                'gift_card_code' => $e->getMessage(),
-            ]);
-        }
-
-        if ($giftCardResult) {
-            $data['gift_card_id'] = $giftCardResult['gift_card']->id;
-            $data['gift_card_code'] = $giftCardResult['code'];
-            $data['gift_card_amount'] = $giftCardResult['amount'];
-            $this->pendingGiftCardRedemption = $giftCardResult;
+            if ($giftCardResult) {
+                $data['gift_card_id'] = $giftCardResult['gift_card']->id;
+                $data['gift_card_code'] = $giftCardResult['code'];
+                $data['gift_card_amount'] = $giftCardResult['amount'];
+                $giftCardAmount = $giftCardResult['amount'];
+                $this->pendingGiftCardRedemption = $giftCardResult;
+            } else {
+                $data['gift_card_id'] = null;
+                $data['gift_card_amount'] = 0;
+                $this->pendingGiftCardRedemption = null;
+            }
         } else {
             $data['gift_card_id'] = null;
+            $data['gift_card_code'] = null;
             $data['gift_card_amount'] = 0;
             $this->pendingGiftCardRedemption = null;
         }
 
-        $giftCardAmount = (float) ($data['gift_card_amount'] ?? 0);
         $data['total_order'] = max($remainingAfterPromo - $giftCardAmount, 0);
         $data['user_id'] = $data['user_id'] ?? Auth::id();
 

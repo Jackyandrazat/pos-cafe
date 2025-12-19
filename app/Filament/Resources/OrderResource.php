@@ -7,6 +7,7 @@ use Filament\Tables;
 use App\Models\CafeTable;
 use App\Models\Order;
 use App\Models\Product;
+use App\Support\Feature;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -44,7 +45,8 @@ class OrderResource extends Resource
                     Forms\Components\TextInput::make('email')->email()->nullable(),
                     Forms\Components\TextInput::make('phone')->tel()->nullable(),
                 ])
-                ->helperText('Opsional, bisa pilih customer untuk loyalty.'),
+                ->helperText('Opsional, bisa pilih customer untuk loyalty.')
+                ->visible(fn () => Feature::enabled('loyalty')),
             Forms\Components\Select::make('table_id')
                 ->label('Meja (Opsional)')
                 ->options(function (callable $get) {
@@ -64,7 +66,8 @@ class OrderResource extends Resource
                 ->searchable()
                 ->preload()
                 ->helperText('Menampilkan meja kosong / reserved. Meja terisi tidak akan muncul kecuali sedang diedit.')
-                ->nullable(),
+                ->nullable()
+                ->visible(fn () => Feature::enabled('table_management')),
 
             Forms\Components\Select::make('order_type')
                 ->label('Tipe Order')
@@ -103,7 +106,8 @@ class OrderResource extends Resource
                 ->maxLength(50)
                 ->helperText('Masukkan kode promo jika ada. Validasi akan dilakukan saat order disimpan.')
                 ->formatStateUsing(fn (?string $state) => $state ? strtoupper($state) : $state)
-                ->dehydrateStateUsing(fn (?string $state) => $state ? strtoupper($state) : $state),
+                ->dehydrateStateUsing(fn (?string $state) => $state ? strtoupper($state) : $state)
+                ->visible(fn () => Feature::enabled('promotions')),
 
             Forms\Components\TextInput::make('promotion_discount')
                 ->label('Diskon Promo')
@@ -118,14 +122,16 @@ class OrderResource extends Resource
                     $giftCardAmount = $get('gift_card_amount') ?? 0;
                     $set('total_order', max($subtotal - $manual - ($state ?? 0) - $giftCardAmount, 0));
                 })
-                ->helperText('Terisi otomatis setelah promo valid.'),
+                ->helperText('Terisi otomatis setelah promo valid.')
+                ->visible(fn () => Feature::enabled('promotions')),
 
             Forms\Components\TextInput::make('gift_card_code')
                 ->label('Gift Card / Corporate Code')
                 ->helperText('Masukkan kode gift card untuk pembayaran. Akan divalidasi saat disimpan.')
                 ->formatStateUsing(fn (?string $state) => $state ? strtoupper($state) : $state)
                 ->dehydrateStateUsing(fn (?string $state) => $state ? strtoupper($state) : $state)
-                ->disabled(fn (?Order $record) => $record?->exists ?? false),
+                ->disabled(fn (?Order $record) => $record?->exists ?? false)
+                ->visible(fn () => Feature::enabled('gift_cards')),
 
             Forms\Components\TextInput::make('gift_card_amount')
                 ->label('Nominal Gift Card')
@@ -140,7 +146,8 @@ class OrderResource extends Resource
                     $manual = $get('discount_order') ?? 0;
                     $promoDiscount = $get('promotion_discount') ?? 0;
                     $set('total_order', max($subtotal - $manual - $promoDiscount - ($state ?? 0), 0));
-                }),
+                })
+                ->visible(fn () => Feature::enabled('gift_cards')),
 
             Forms\Components\TextInput::make('total_order')
                 ->label('Total Bayar')
@@ -165,10 +172,12 @@ class OrderResource extends Resource
 
                 Tables\Columns\TextColumn::make('table.table_number')
                     ->label('Meja')
-                    ->sortable(),
+                    ->sortable()
+                    ->visible(fn () => Feature::enabled('table_management')),
                 Tables\Columns\TextColumn::make('customer.name')
                     ->label('Customer')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->visible(fn () => Feature::enabled('loyalty')),
 
                 Tables\Columns\TextColumn::make('total_order')
                     ->label('Total')
@@ -178,16 +187,18 @@ class OrderResource extends Resource
                 Tables\Columns\TextColumn::make('promotion_code')
                     ->label('Kode Promo')
                     ->placeholder('-')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->visible(fn () => Feature::enabled('promotions')),
                 Tables\Columns\TextColumn::make('gift_card_code')
                     ->label('Gift Card')
                     ->placeholder('-')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->visible(fn () => Feature::enabled('gift_cards')),
                 Tables\Columns\TextColumn::make('gift_card_amount')
                     ->label('Nominal Gift Card')
                     ->money('IDR')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->visible(fn () => Feature::enabled('gift_cards')),
                 Tables\Columns\BadgeColumn::make('status')
                     ->label('Status')
                     ->colors([

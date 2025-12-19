@@ -10,6 +10,7 @@ use Filament\Forms\Form;
 use App\Models\Promotion;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
+use App\Support\Feature;
 use App\Filament\Resources\PromotionResource\Pages;
 
 class PromotionResource extends Resource
@@ -139,6 +140,36 @@ class PromotionResource extends Resource
                             ->helperText('Jika jam akhir lebih kecil dari awal → dianggap melewati tengah malam.'),
                     ])->columns(3),
             ]);
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return Feature::enabled('promotions');
+    }
+
+    public static function canViewAny(): bool
+    {
+        return Feature::enabled('promotions');
+    }
+
+    public static function canCreate(): bool
+    {
+        return Feature::enabled('promotions');
+    }
+
+    public static function canEdit($record): bool
+    {
+        return Feature::enabled('promotions');
+    }
+
+    public static function canDelete($record): bool
+    {
+        return Feature::enabled('promotions');
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return Feature::enabled('promotions');
     }
 
     public static function table(Table $table): Table

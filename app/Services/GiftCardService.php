@@ -6,6 +6,7 @@ use App\Exceptions\GiftCardException;
 use App\Models\GiftCard;
 use App\Models\GiftCardTransaction;
 use App\Models\Order;
+use App\Support\Feature;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -26,6 +27,10 @@ class GiftCardService
 
         if (! $normalized) {
             return null;
+        }
+
+        if (! Feature::enabled('gift_cards')) {
+            throw new GiftCardException('Fitur gift card sedang dinonaktifkan.');
         }
 
         /** @var GiftCard|null $giftCard */
@@ -71,6 +76,10 @@ class GiftCardService
     public function redeemForOrder(Order $order, GiftCard $giftCard, float $amount): void
     {
         DB::transaction(function () use ($order, $giftCard, $amount) {
+            if (! Feature::enabled('gift_cards')) {
+                throw new GiftCardException('Fitur gift card sedang dinonaktifkan.');
+            }
+
             $giftCard->refresh();
 
             if (! $giftCard->isRedeemable()) {
@@ -110,6 +119,10 @@ class GiftCardService
         }
 
         DB::transaction(function () use ($giftCard, $amount, $notes) {
+            if (! Feature::enabled('gift_cards')) {
+                throw new GiftCardException('Fitur gift card sedang dinonaktifkan.');
+            }
+
             $giftCard->refresh();
             $giftCard->balance = round($giftCard->balance + $amount, 2);
 

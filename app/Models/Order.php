@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\OrderStatus;
+use App\Support\Feature;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -41,6 +42,10 @@ class Order extends Model
 
     protected static function booted(): void
     {
+        if (! Feature::enabled('table_management')) {
+            return;
+        }
+
         static::created(function (self $order) {
             if ($order->order_type === 'dine_in' && $order->table_id) {
                 CafeTable::whereKey($order->table_id)->update(['status' => 'occupied']);

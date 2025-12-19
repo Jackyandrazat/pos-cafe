@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Models\Area;
 use App\Models\CafeTable;
 use App\Models\TableQueueEntry;
+use App\Support\Feature;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 
@@ -35,8 +36,15 @@ class TableStatusBoard extends Page
 
     public function mount(): void
     {
+        abort_unless(Feature::enabled('table_management'), 403);
+
         $this->selectedArea = Area::query()->where('status_enabled', true)->value('id');
         $this->refreshData();
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return Feature::enabled('table_management');
     }
 
     public function updatedSelectedArea(): void

@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\Promotion;
 use App\Models\PromotionUsage;
 use App\Models\User;
+use App\Support\Feature;
 use Illuminate\Support\Str;
 
 class PromotionService
@@ -28,6 +29,10 @@ class PromotionService
         $normalizedCode = self::normalizeCode($code);
 
         if (! $normalizedCode) {
+            return null;
+        }
+
+        if (! Feature::enabled('promotions')) {
             return null;
         }
 
@@ -100,6 +105,10 @@ class PromotionService
 
     public static function syncUsage(Order $order): void
     {
+        if (! Feature::enabled('promotions')) {
+            return;
+        }
+
         PromotionUsage::query()->where('order_id', $order->id)->delete();
 
         if (! $order->promotion_id) {

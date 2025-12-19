@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Filament\Resources\IngredientWasteResource;
 use App\Services\InventoryWasteReportService;
+use App\Support\Feature;
 use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -33,6 +34,8 @@ class InventoryWasteDashboard extends Page
 
     public function mount(): void
     {
+        abort_unless(Feature::enabled('inventory_waste'), 403);
+
         $this->rows = collect();
 
         $this->form->fill([
@@ -41,6 +44,11 @@ class InventoryWasteDashboard extends Page
         ]);
 
         $this->loadReport();
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return Feature::enabled('inventory_waste');
     }
 
     protected function getHeaderActions(): array

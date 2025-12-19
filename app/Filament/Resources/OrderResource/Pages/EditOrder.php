@@ -4,6 +4,7 @@ namespace App\Filament\Resources\OrderResource\Pages;
 
 use App\Exceptions\PromotionException;
 use App\Filament\Resources\OrderResource;
+use App\Support\Feature;
 use App\Services\PromotionService;
 use Filament\Actions;
 use Filament\Notifications\Notification;
@@ -61,7 +62,9 @@ class EditOrder extends EditRecord
         });
 
         // Clear session setelah simpan
-        PromotionService::syncUsage($order);
+        if (Feature::enabled('promotions')) {
+            PromotionService::syncUsage($order);
+        }
 
         session()->forget('selected_order_items');
     }
@@ -72,35 +75,41 @@ class EditOrder extends EditRecord
         $data['subtotal_order'] = collect($items)->sum('subtotal');
         $manualDiscount = max((float) ($data['discount_order'] ?? 0), 0);
 
-        try {
-            $promotionResult = PromotionService::validateAndCalculate(
-                $data['promotion_code'] ?? null,
-                $data['subtotal_order'],
-                $this->record->user ?? Auth::user(),
-                $this->record->id,
-            );
-        } catch (PromotionException $e) {
-            report($e);
+        if (Feature::enabled('promotions')) {
+            try {
+                $promotionResult = PromotionService::validateAndCalculate(
+                    $data['promotion_code'] ?? null,
+                    $data['subtotal_order'],
+                    $this->record->user ?? Auth::user(),
+                    $this->record->id,
+                );
+            } catch (PromotionException $e) {
+                report($e);
 
-            Notification::make()
-                ->title('Kode Promo Gagal Digunakan')
-                ->body($e->getMessage())
-                ->danger()
-                ->send();
+                Notification::make()
+                    ->title('Kode Promo Gagal Digunakan')
+                    ->body($e->getMessage())
+                    ->danger()
+                    ->send();
 
-            throw ValidationException::withMessages([
-                'promotion_code' => $e->getMessage(),
-            ]);
-        }
+                throw ValidationException::withMessages([
+                    'promotion_code' => $e->getMessage(),
+                ]);
+            }
 
-        if ($promotionResult) {
-            $data['promotion_id'] = $promotionResult['promotion']->id;
-            $data['promotion_code'] = $promotionResult['code'];
-            $data['promotion_discount'] = $promotionResult['discount'];
+            if ($promotionResult) {
+                $data['promotion_id'] = $promotionResult['promotion']->id;
+                $data['promotion_code'] = $promotionResult['code'];
+                $data['promotion_discount'] = $promotionResult['discount'];
+            } else {
+                $data['promotion_id'] = null;
+                $data['promotion_code'] = null;
+                $data['promotion_discount'] = 0;
+            }
         } else {
-            $data['promotion_id'] = null;
-            $data['promotion_code'] = null;
-            $data['promotion_discount'] = 0;
+            $data['promotion_id'] = $this->record->promotion_id;
+            $data['promotion_code'] = $this->record->promotion_code;
+            $data['promotion_discount'] = $this->record->promotion_discount;
         }
 
         $promoDiscount = (float) ($data['promotion_discount'] ?? 0);

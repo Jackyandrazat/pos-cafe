@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\IngredientWasteResource\Pages;
 use App\Models\Ingredient;
 use App\Models\IngredientWaste;
+use App\Support\Feature;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -135,5 +136,35 @@ class IngredientWasteResource extends Resource
             'create' => Pages\CreateIngredientWaste::route('/create'),
             'edit' => Pages\EditIngredientWaste::route('/{record}/edit'),
         ];
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return Feature::enabled('inventory_waste');
+    }
+
+    public static function canViewAny(): bool
+    {
+        return Feature::enabled('inventory_waste');
+    }
+
+    public static function canCreate(): bool
+    {
+        return Feature::enabled('inventory_waste');
+    }
+
+    public static function canEdit($record): bool
+    {
+        return Feature::enabled('inventory_waste');
+    }
+
+    public static function canDelete($record): bool
+    {
+        return Feature::enabled('inventory_waste');
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return Feature::enabled('inventory_waste');
     }
 }

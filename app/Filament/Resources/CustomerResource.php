@@ -6,6 +6,7 @@ use App\Filament\Resources\CustomerResource\Pages;
 use App\Filament\Resources\CustomerResource\RelationManagers\CustomerPointTransactionsRelationManager;
 use App\Filament\Resources\CustomerResource\RelationManagers\OrdersRelationManager;
 use App\Models\Customer;
+use App\Support\Feature;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -86,5 +87,35 @@ class CustomerResource extends Resource
             'create' => Pages\CreateCustomer::route('/create'),
             'edit' => Pages\EditCustomer::route('/{record}/edit'),
         ];
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return Feature::enabled('loyalty');
+    }
+
+    public static function canViewAny(): bool
+    {
+        return Feature::enabled('loyalty');
+    }
+
+    public static function canCreate(): bool
+    {
+        return Feature::enabled('loyalty');
+    }
+
+    public static function canEdit($record): bool
+    {
+        return Feature::enabled('loyalty');
+    }
+
+    public static function canDelete($record): bool
+    {
+        return Feature::enabled('loyalty');
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return Feature::enabled('loyalty');
     }
 }
