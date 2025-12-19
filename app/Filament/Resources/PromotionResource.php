@@ -115,6 +115,29 @@ class PromotionResource extends Resource
                             ->label('Aktif')
                             ->default(true),
                     ])->columns(3),
+                Forms\Components\Section::make('Jadwal Dinamis (Opsional)')
+                    ->schema([
+                        Forms\Components\CheckboxList::make('schedule_days')
+                            ->label('Hari Berlaku')
+                            ->options([
+                                1 => 'Senin',
+                                2 => 'Selasa',
+                                3 => 'Rabu',
+                                4 => 'Kamis',
+                                5 => 'Jumat',
+                                6 => 'Sabtu',
+                                7 => 'Minggu',
+                            ])
+                            ->columns(2)
+                            ->helperText('Kosongkan jika promo berlaku setiap hari.'),
+                        Forms\Components\TimePicker::make('schedule_start_time')
+                            ->label('Mulai (Jam)')
+                            ->seconds(false),
+                        Forms\Components\TimePicker::make('schedule_end_time')
+                            ->label('Selesai (Jam)')
+                            ->seconds(false)
+                            ->helperText('Jika jam akhir lebih kecil dari awal → dianggap melewati tengah malam.'),
+                    ])->columns(3),
             ]);
     }
 

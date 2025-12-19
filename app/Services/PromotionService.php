@@ -42,7 +42,7 @@ class PromotionService
         }
 
         if (! $promotion->isCurrentlyValid()) {
-            throw new PromotionException('Promo belum aktif atau sudah berakhir.');
+            throw new PromotionException('Promo belum aktif atau berada di luar jam yang ditentukan.');
         }
 
         if ($subtotal < $promotion->min_subtotal) {

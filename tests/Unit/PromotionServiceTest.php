@@ -107,4 +107,32 @@ class PromotionServiceTest extends TestCase
 
         Carbon::setTestNow();
     }
+
+    public function test_promotion_respects_schedule_days_and_time_window(): void
+    {
+        Carbon::setTestNow('2025-12-19 14:00:00'); // Friday 14:00
+
+        $user = User::factory()->create();
+
+        $promotion = Promotion::create([
+            'name' => 'Happy Hour Coffee',
+            'code' => 'HAPPY',
+            'type' => 'percentage',
+            'discount_value' => 20,
+            'schedule_days' => [5], // Friday
+            'schedule_start_time' => '13:00:00',
+            'schedule_end_time' => '15:00:00',
+            'is_active' => true,
+        ]);
+
+        $result = PromotionService::validateAndCalculate('happy', 50000, $user);
+        $this->assertNotNull($result);
+        $this->assertEquals(10000, $result['discount']);
+
+        Carbon::setTestNow('2025-12-19 16:00:00');
+        $this->expectException(PromotionException::class);
+        PromotionService::validateAndCalculate('happy', 50000, $user);
+
+        Carbon::setTestNow();
+    }
 }

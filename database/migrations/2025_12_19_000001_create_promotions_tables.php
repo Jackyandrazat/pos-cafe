@@ -20,6 +20,9 @@ return new class extends Migration {
             $table->timestamp('starts_at')->nullable();
             $table->timestamp('ends_at')->nullable();
             $table->boolean('is_active')->default(true);
+            $table->json('schedule_days')->nullable();
+            $table->time('schedule_start_time')->nullable();
+            $table->time('schedule_end_time')->nullable();
             $table->text('description')->nullable();
             $table->timestamps();
         });

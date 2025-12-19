@@ -23,6 +23,9 @@ class Promotion extends Model
         'ends_at',
         'is_active',
         'description',
+        'schedule_days',
+        'schedule_start_time',
+        'schedule_end_time',
     ];
 
     protected $casts = [
@@ -34,6 +37,7 @@ class Promotion extends Model
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
         'is_active' => 'boolean',
+        'schedule_days' => 'array',
     ];
 
     public function usages(): HasMany
@@ -71,6 +75,24 @@ class Promotion extends Model
 
         if ($endsAt && $now->gt($endsAt)) {
             return false;
+        }
+
+        if ($this->schedule_days && ! in_array($now->dayOfWeekIso, array_map('intval', $this->schedule_days), true)) {
+            return false;
+        }
+
+        if ($this->schedule_start_time && $this->schedule_end_time) {
+            $currentTime = $now->format('H:i:s');
+
+            if ($this->schedule_start_time > $this->schedule_end_time) {
+                $inWindow = $currentTime >= $this->schedule_start_time || $currentTime <= $this->schedule_end_time;
+            } else {
+                $inWindow = $currentTime >= $this->schedule_start_time && $currentTime <= $this->schedule_end_time;
+            }
+
+            if (! $inWindow) {
+                return false;
+            }
         }
 
         return true;
