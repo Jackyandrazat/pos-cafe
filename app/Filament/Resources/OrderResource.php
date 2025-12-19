@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use Filament\Forms;
 use Filament\Tables;
+use App\Models\CafeTable;
 use App\Models\Order;
 use App\Models\Product;
 use Filament\Forms\Form;
@@ -46,8 +47,23 @@ class OrderResource extends Resource
                 ->helperText('Opsional, bisa pilih customer untuk loyalty.'),
             Forms\Components\Select::make('table_id')
                 ->label('Meja (Opsional)')
-                ->relationship('table', 'table_number')
+                ->options(function (callable $get) {
+                    $current = $get('table_id');
+
+                    return CafeTable::query()
+                        ->where(function ($query) use ($current) {
+                            $query->whereIn('status', ['available', 'reserved']);
+
+                            if ($current) {
+                                $query->orWhere('id', $current);
+                            }
+                        })
+                        ->orderBy('table_number')
+                        ->pluck('table_number', 'id');
+                })
                 ->searchable()
+                ->preload()
+                ->helperText('Menampilkan meja kosong / reserved. Meja terisi tidak akan muncul kecuali sedang diedit.')
                 ->nullable(),
 
             Forms\Components\Select::make('order_type')

@@ -43,9 +43,31 @@ class TableResource extends Resource
                         'available' => 'Available',
                         'occupied' => 'Occupied',
                         'reserved' => 'Reserved',
+                        'cleaning' => 'Cleaning',
                     ])
                     ->default('available')
                     ->required(),
+
+                Forms\Components\TextInput::make('capacity')
+                    ->label('Kapasitas (pax)')
+                    ->numeric()
+                    ->minValue(1)
+                    ->default(2),
+
+                Forms\Components\Fieldset::make('Posisi Opsional')
+                    ->schema([
+                        Forms\Components\TextInput::make('x_position')
+                            ->numeric()
+                            ->label('Posisi X'),
+                        Forms\Components\TextInput::make('y_position')
+                            ->numeric()
+                            ->label('Posisi Y'),
+                    ])->columns(2),
+
+                Forms\Components\Textarea::make('notes')
+                    ->rows(2)
+                    ->label('Catatan')
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -62,8 +84,18 @@ class TableResource extends Resource
                     ->label('Area')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('status')
+                Tables\Columns\TextColumn::make('capacity')
+                    ->label('Pax')
+                    ->sortable(),
+
+                Tables\Columns\BadgeColumn::make('status')
                     ->label('Status')
+                    ->colors([
+                        'success' => 'available',
+                        'warning' => 'reserved',
+                        'danger' => 'occupied',
+                        'gray' => 'cleaning',
+                    ])
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('created_at')

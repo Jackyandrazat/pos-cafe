@@ -35,6 +35,25 @@ class Order extends Model
         'total_order' => 'float',
     ];
 
+    protected static function booted(): void
+    {
+        static::created(function (self $order) {
+            if ($order->order_type === 'dine_in' && $order->table_id) {
+                CafeTable::whereKey($order->table_id)->update(['status' => 'occupied']);
+            }
+        });
+
+        static::updated(function (self $order) {
+            if ($order->order_type === 'dine_in' && $order->wasChanged('status') && $order->table_id) {
+                match ($order->status) {
+                    'completed' => CafeTable::whereKey($order->table_id)->update(['status' => 'cleaning']),
+                    'cancelled' => CafeTable::whereKey($order->table_id)->update(['status' => 'available']),
+                    default => null,
+                };
+            }
+        });
+    }
+
     // Relasi ke meja
     public function table()
     {
