@@ -16,7 +16,12 @@ class StoreOrderRequest extends FormRequest
         return [
             'order_type' => ['required', 'in:dine_in,take_away,delivery'],
             'table_id' => ['nullable', 'exists:tables,id'],
+            'customer_id' => ['nullable', 'exists:customers,id'],
             'customer_name' => ['nullable', 'string', 'max:255'],
+            'discount_order' => ['nullable', 'numeric', 'min:0'],
+            'promotion_code' => ['nullable', 'string', 'max:50'],
+            'gift_card_code' => ['nullable', 'string', 'max:50'],
+            'gift_card_amount' => ['nullable', 'numeric', 'min:0.01', 'required_with:gift_card_code'],
             'notes' => ['nullable', 'string'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.menu_id' => ['required', 'exists:products,id'],

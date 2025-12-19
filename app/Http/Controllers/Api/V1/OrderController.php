@@ -3,12 +3,19 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\OrderStatus;
+use App\Exceptions\GiftCardException;
+use App\Exceptions\PromotionException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\StoreOrderRequest;
 use App\Http\Resources\Api\V1\OrderResource;
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
+use App\Services\GiftCardService;
+use App\Services\LoyaltyService;
+use App\Services\PromotionService;
 use App\Services\ShiftGuard;
+use App\Support\Feature;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -17,11 +24,17 @@ use Symfony\Component\HttpFoundation\Response;
 
 class OrderController extends Controller
 {
+    public function __construct(
+        protected GiftCardService $giftCardService,
+        protected LoyaltyService $loyaltyService,
+    ) {
+    }
+
     public function index(Request $request): AnonymousResourceCollection
     {
         $user = $request->user();
 
-        $query = $user->orders()->with(['items.product'])->latest();
+        $query = $user->orders()->with(['items.product', 'customer'])->latest();
 
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));
@@ -40,16 +53,30 @@ class OrderController extends Controller
         $user = $request->user();
         ShiftGuard::ensureActiveShift($user);
 
-        $order = DB::transaction(function () use ($data, $user) {
+        $pendingGiftCard = null;
+
+        $order = DB::transaction(function () use ($data, $user, &$pendingGiftCard) {
+            $customer = null;
+            if (Feature::enabled('loyalty') && ! empty($data['customer_id'])) {
+                $customer = Customer::find($data['customer_id']);
+            }
+
             $order = Order::create([
                 'user_id' => $user->id,
-                'table_id' => $data['table_id'] ?? null,
+                'customer_id' => $customer?->id,
+                'table_id' => Feature::enabled('table_management') ? ($data['table_id'] ?? null) : null,
                 'order_type' => $data['order_type'],
-                'customer_name' => $data['customer_name'] ?? null,
+                'customer_name' => $customer?->name ?? ($data['customer_name'] ?? null),
                 'notes' => $data['notes'] ?? null,
                 'status' => OrderStatus::Draft->value,
                 'subtotal_order' => 0,
-                'discount_order' => 0,
+                'discount_order' => (float) ($data['discount_order'] ?? 0),
+                'promotion_id' => null,
+                'promotion_code' => null,
+                'promotion_discount' => 0,
+                'gift_card_id' => null,
+                'gift_card_code' => null,
+                'gift_card_amount' => 0,
                 'service_fee_order' => 0,
                 'total_order' => 0,
             ]);
@@ -79,12 +106,74 @@ class OrderController extends Controller
             }
 
             $order->recalculateTotals();
+
+            $subtotal = $order->subtotal_order;
+            $manualDiscount = max((float) ($order->discount_order ?? 0), 0);
+            $remaining = max($subtotal - $manualDiscount, 0);
+
+            if (Feature::enabled('promotions') && ! empty($data['promotion_code'])) {
+                try {
+                    $promotionResult = PromotionService::validateAndCalculate(
+                        $data['promotion_code'],
+                        $subtotal,
+                        $user,
+                    );
+                } catch (PromotionException $e) {
+                    abort(Response::HTTP_UNPROCESSABLE_ENTITY, $e->getMessage());
+                }
+
+                if ($promotionResult) {
+                    $order->promotion_id = $promotionResult['promotion']->id;
+                    $order->promotion_code = $promotionResult['code'];
+                    $order->promotion_discount = $promotionResult['discount'];
+                    $remaining = max($remaining - $promotionResult['discount'], 0);
+                }
+            }
+
+            if (Feature::enabled('gift_cards') && ! empty($data['gift_card_code'])) {
+                try {
+                    $giftCardResult = $this->giftCardService->prepareRedemption(
+                        $data['gift_card_code'],
+                        (float) ($data['gift_card_amount'] ?? 0),
+                        $remaining,
+                    );
+                } catch (GiftCardException $e) {
+                    abort(Response::HTTP_UNPROCESSABLE_ENTITY, $e->getMessage());
+                }
+
+                if ($giftCardResult) {
+                    $order->gift_card_id = $giftCardResult['gift_card']->id;
+                    $order->gift_card_code = $giftCardResult['code'];
+                    $order->gift_card_amount = $giftCardResult['amount'];
+                    $remaining = max($remaining - $giftCardResult['amount'], 0);
+                    $pendingGiftCard = $giftCardResult;
+                }
+            }
+
+            $order->total_order = $remaining;
+            $order->save();
             $order->logStatus(OrderStatus::Draft, 'Order created');
 
             return $order;
         });
 
-        return (new OrderResource($order->load('items.product')))
+        if (Feature::enabled('promotions')) {
+            PromotionService::syncUsage($order);
+        }
+
+        if ($pendingGiftCard) {
+            $this->giftCardService->redeemForOrder(
+                $order,
+                $pendingGiftCard['gift_card'],
+                $pendingGiftCard['amount'],
+            );
+        }
+
+        if (Feature::enabled('loyalty')) {
+            $this->loyaltyService->rewardOrderPoints($order->fresh('customer'));
+        }
+
+        return (new OrderResource($order->load(['items.product', 'customer'])))
             ->response()
             ->setStatusCode(Response::HTTP_CREATED);
     }
@@ -93,7 +182,7 @@ class OrderController extends Controller
     {
         $this->ensureOrderOwner($request->user(), $order);
 
-        return new OrderResource($order->load('items.product'));
+        return new OrderResource($order->load(['items.product', 'customer']));
     }
 
     public function submit(Request $request, Order $order): OrderResource
@@ -114,7 +203,7 @@ class OrderController extends Controller
         $order->save();
         $order->logStatus(OrderStatus::Pending, 'Order submitted');
 
-        return new OrderResource($order->fresh('items.product'));
+        return new OrderResource($order->fresh(['items.product', 'customer']));
     }
 
     public function cancel(Request $request, Order $order): OrderResource
@@ -133,7 +222,7 @@ class OrderController extends Controller
         $order->save();
         $order->logStatus(OrderStatus::Cancelled, 'Order cancelled by user');
 
-        return new OrderResource($order->fresh('items.product'));
+        return new OrderResource($order->fresh(['items.product', 'customer']));
     }
 
     protected function ensureOrderOwner($user, Order $order): void
