@@ -104,7 +104,13 @@ class EditOrder extends EditRecord
         }
 
         $promoDiscount = (float) ($data['promotion_discount'] ?? 0);
-        $data['total_order'] = max($data['subtotal_order'] - $manualDiscount - $promoDiscount, 0);
+        $giftCardAmount = (float) ($this->record->gift_card_amount ?? 0);
+
+        $data['gift_card_id'] = $this->record->gift_card_id;
+        $data['gift_card_code'] = $this->record->gift_card_code;
+        $data['gift_card_amount'] = $giftCardAmount;
+
+        $data['total_order'] = max($data['subtotal_order'] - $manualDiscount - $promoDiscount - $giftCardAmount, 0);
         $data['user_id'] = $data['user_id'] ?? $this->record->user_id ?? Auth::id();
 
         return $data;

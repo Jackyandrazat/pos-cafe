@@ -22,6 +22,9 @@ class Order extends Model
         'promotion_id',
         'promotion_code',
         'promotion_discount',
+        'gift_card_id',
+        'gift_card_code',
+        'gift_card_amount',
         'service_fee_order',
         'total_order',
         'notes',
@@ -31,6 +34,7 @@ class Order extends Model
         'subtotal_order' => 'float',
         'discount_order' => 'float',
         'promotion_discount' => 'float',
+        'gift_card_amount' => 'float',
         'service_fee_order' => 'float',
         'total_order' => 'float',
     ];
@@ -90,6 +94,11 @@ class Order extends Model
     public function customer()
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function giftCard()
+    {
+        return $this->belongsTo(GiftCard::class);
     }
 
     public function statusLogs()

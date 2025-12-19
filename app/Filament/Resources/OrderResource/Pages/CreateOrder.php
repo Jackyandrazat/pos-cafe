@@ -2,11 +2,13 @@
 
 namespace App\Filament\Resources\OrderResource\Pages;
 
+use App\Exceptions\GiftCardException;
 use App\Exceptions\PromotionException;
 use App\Exceptions\StockValidationException;
 use App\Filament\Resources\OrderResource;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Services\GiftCardService;
 use App\Services\PromotionService;
 use App\Services\LoyaltyService;
 use App\Services\StockValidationService;
@@ -20,6 +22,8 @@ class CreateOrder extends CreateRecord
 {
     protected static string $resource = OrderResource::class;
     protected static string $view = 'filament.resources.order.create';
+
+    protected ?array $pendingGiftCardRedemption = null;
 
     protected function beforeCreate(): void
     {
@@ -94,6 +98,36 @@ class CreateOrder extends CreateRecord
 
         $this->record->load('customer');
         app(LoyaltyService::class)->rewardOrderPoints($this->record);
+
+        if ($this->pendingGiftCardRedemption) {
+            /** @var GiftCardService $giftCardService */
+            $giftCardService = app(GiftCardService::class);
+
+            try {
+                $giftCardService->redeemForOrder(
+                    $this->record,
+                    $this->pendingGiftCardRedemption['gift_card'],
+                    $this->pendingGiftCardRedemption['amount'],
+                );
+            } catch (GiftCardException $e) {
+                report($e);
+
+                $this->record->update([
+                    'gift_card_id' => null,
+                    'gift_card_code' => null,
+                    'gift_card_amount' => 0,
+                    'total_order' => $this->record->total_order + $this->pendingGiftCardRedemption['amount'],
+                ]);
+
+                Notification::make()
+                    ->title('Gift Card Gagal Diproses')
+                    ->body($e->getMessage())
+                    ->warning()
+                    ->send();
+            }
+
+            $this->pendingGiftCardRedemption = null;
+        }
     }
 
     protected function mutateFormDataBeforeCreate(array $data): array
@@ -133,7 +167,45 @@ class CreateOrder extends CreateRecord
         }
 
         $promoDiscount = (float) ($data['promotion_discount'] ?? 0);
-        $data['total_order'] = max($data['subtotal_order'] - $manualDiscount - $promoDiscount, 0);
+        $remainingAfterPromo = max($data['subtotal_order'] - $manualDiscount - $promoDiscount, 0);
+
+        $giftCardResult = null;
+
+        try {
+            /** @var GiftCardService $giftCardService */
+            $giftCardService = app(GiftCardService::class);
+            $giftCardResult = $giftCardService->prepareRedemption(
+                $data['gift_card_code'] ?? null,
+                (float) ($data['gift_card_amount'] ?? 0),
+                $remainingAfterPromo,
+            );
+        } catch (GiftCardException $e) {
+            report($e);
+
+            Notification::make()
+                ->title('Gift Card Gagal Digunakan')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+
+            throw ValidationException::withMessages([
+                'gift_card_code' => $e->getMessage(),
+            ]);
+        }
+
+        if ($giftCardResult) {
+            $data['gift_card_id'] = $giftCardResult['gift_card']->id;
+            $data['gift_card_code'] = $giftCardResult['code'];
+            $data['gift_card_amount'] = $giftCardResult['amount'];
+            $this->pendingGiftCardRedemption = $giftCardResult;
+        } else {
+            $data['gift_card_id'] = null;
+            $data['gift_card_amount'] = 0;
+            $this->pendingGiftCardRedemption = null;
+        }
+
+        $giftCardAmount = (float) ($data['gift_card_amount'] ?? 0);
+        $data['total_order'] = max($remainingAfterPromo - $giftCardAmount, 0);
         $data['user_id'] = $data['user_id'] ?? Auth::id();
 
         return $data;

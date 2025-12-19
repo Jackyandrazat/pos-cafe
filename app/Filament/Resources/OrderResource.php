@@ -94,7 +94,8 @@ class OrderResource extends Resource
                 ->afterStateUpdated(function (callable $set, callable $get, $state) {
                     $subtotal = $get('subtotal_order') ?? 0;
                     $promoDiscount = $get('promotion_discount') ?? 0;
-                    $set('total_order', max($subtotal - $state - $promoDiscount, 0));
+                    $giftCardAmount = $get('gift_card_amount') ?? 0;
+                    $set('total_order', max($subtotal - $state - $promoDiscount - $giftCardAmount, 0));
                 }),
 
             Forms\Components\TextInput::make('promotion_code')
@@ -114,9 +115,32 @@ class OrderResource extends Resource
                 ->afterStateUpdated(function (callable $set, callable $get, $state) {
                     $subtotal = $get('subtotal_order') ?? 0;
                     $manual = $get('discount_order') ?? 0;
-                    $set('total_order', max($subtotal - $manual - ($state ?? 0), 0));
+                    $giftCardAmount = $get('gift_card_amount') ?? 0;
+                    $set('total_order', max($subtotal - $manual - ($state ?? 0) - $giftCardAmount, 0));
                 })
                 ->helperText('Terisi otomatis setelah promo valid.'),
+
+            Forms\Components\TextInput::make('gift_card_code')
+                ->label('Gift Card / Corporate Code')
+                ->helperText('Masukkan kode gift card untuk pembayaran. Akan divalidasi saat disimpan.')
+                ->formatStateUsing(fn (?string $state) => $state ? strtoupper($state) : $state)
+                ->dehydrateStateUsing(fn (?string $state) => $state ? strtoupper($state) : $state)
+                ->disabled(fn (?Order $record) => $record?->exists ?? false),
+
+            Forms\Components\TextInput::make('gift_card_amount')
+                ->label('Nominal Gift Card')
+                ->numeric()
+                ->minValue(0)
+                ->default(0)
+                ->helperText('Nilai yang dipakai tidak boleh melebihi tagihan sisa. Tidak dapat diubah setelah order dibuat.')
+                ->reactive()
+                ->disabled(fn (?Order $record) => $record?->exists ?? false)
+                ->afterStateUpdated(function (callable $set, callable $get, $state) {
+                    $subtotal = $get('subtotal_order') ?? 0;
+                    $manual = $get('discount_order') ?? 0;
+                    $promoDiscount = $get('promotion_discount') ?? 0;
+                    $set('total_order', max($subtotal - $manual - $promoDiscount - ($state ?? 0), 0));
+                }),
 
             Forms\Components\TextInput::make('total_order')
                 ->label('Total Bayar')
@@ -154,6 +178,14 @@ class OrderResource extends Resource
                 Tables\Columns\TextColumn::make('promotion_code')
                     ->label('Kode Promo')
                     ->placeholder('-')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('gift_card_code')
+                    ->label('Gift Card')
+                    ->placeholder('-')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('gift_card_amount')
+                    ->label('Nominal Gift Card')
+                    ->money('IDR')
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\BadgeColumn::make('status')
