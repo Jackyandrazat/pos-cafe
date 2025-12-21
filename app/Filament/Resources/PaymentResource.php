@@ -56,7 +56,9 @@ class PaymentResource extends Resource
                         'cash' => 'Cash',
                         'qris' => 'QRIS',
                         'transfer' => 'Transfer',
+                        'ewallet' => 'E-Wallet',
                     ])
+                    ->reactive()
                     ->required(),
 
                 Forms\Components\TextInput::make('amount_paid')
@@ -69,6 +71,41 @@ class PaymentResource extends Resource
                     ->numeric()
                     ->disabled()
                     ->default(0),
+
+                Forms\Components\TextInput::make('provider')
+                    ->label('Provider')
+                    ->default('manual')
+                    ->maxLength(100),
+
+                Forms\Components\TextInput::make('external_reference')
+                    ->label('Referensi Eksternal')
+                    ->maxLength(120)
+                    ->nullable(),
+
+                Forms\Components\Select::make('status')
+                    ->label('Status')
+                    ->options([
+                        'pending' => 'Pending',
+                        'captured' => 'Captured',
+                        'failed' => 'Failed',
+                        'refunded' => 'Refunded',
+                    ])
+                    ->default('captured'),
+
+                Forms\Components\KeyValue::make('meta')
+                    ->label('Meta (JSON)')
+                    ->nullable()
+                    ->helperText('Opsional: data tambahan dari gateway.'),
+
+                Forms\Components\DateTimePicker::make('payment_date')
+                    ->label('Tanggal Pembayaran')
+                    ->seconds(false)
+                    ->default(now()),
+
+                Forms\Components\DateTimePicker::make('paid_at')
+                    ->label('Terekam Bayar')
+                    ->seconds(false)
+                    ->nullable(),
             ]);
     }
 
@@ -82,6 +119,26 @@ class PaymentResource extends Resource
 
                 Tables\Columns\TextColumn::make('payment_method')
                     ->label('Metode Bayar')
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('provider')
+                    ->label('Provider')
+                    ->toggleable()
+                    ->sortable(),
+
+                Tables\Columns\BadgeColumn::make('status')
+                    ->label('Status')
+                    ->colors([
+                        'warning' => 'pending',
+                        'success' => 'captured',
+                        'danger' => 'failed',
+                        'gray' => 'refunded',
+                    ])
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('external_reference')
+                    ->label('Reference')
+                    ->toggleable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('amount_paid')
@@ -111,6 +168,13 @@ class PaymentResource extends Resource
                     ->visible(fn ($record) => $record->order?->status === 'completed')
                     ->url(fn ($record) => self::generateWhatsappLink($record))
                     ->openUrlInNewTab(),
+                Action::make('lihat_instruksi')
+                    ->label('Instruksi')
+                    ->icon('heroicon-o-qr-code')
+                    ->visible(fn (Payment $record) => in_array($record->payment_method, ['qris', 'ewallet']) && filled($record->meta))
+                    ->modalHeading('Instruksi Pembayaran')
+                    ->modalContent(fn (Payment $record) => view('filament.components.payment-instructions', ['payment' => $record]))
+                    ->modalWidth('md'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -123,11 +187,13 @@ class PaymentResource extends Resource
 
     public static function generateWhatsappLink($payment): string
     {
-        $order = $payment->order;
+        $order = $payment->order?->loadMissing('items.product');
+        if (! $order) {
+            return '#';
+        }
         $customerName = $order->customer_name ?? 'Pelanggan';
 
-        // Pastikan $items tidak null
-        $items = $order->orderItems ?? collect();
+        $items = $order->items ?? collect();
 
         $lines = [];
         $lines[] = "*Struk Pembelian Cafe*";

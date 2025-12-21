@@ -12,10 +12,21 @@ class Payment extends Model
     protected $fillable = [
         'order_id',
         'payment_method',
+        'provider',
+        'external_reference',
+        'status',
+        'meta',
         'amount_paid',
         'change_return',
         'payment_date',
+        'paid_at',
         'shift_id',
+    ];
+
+    protected $casts = [
+        'meta' => 'array',
+        'payment_date' => 'datetime',
+        'paid_at' => 'datetime',
     ];
 
     // Relasi ke order

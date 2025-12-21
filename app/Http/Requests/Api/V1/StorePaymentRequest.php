@@ -15,7 +15,7 @@ class StorePaymentRequest extends FormRequest
     {
         return [
             'payment_method' => ['required', 'in:cash,qris,transfer,ewallet'],
-            'amount' => ['required', 'numeric', 'min:0'],
+            'amount' => ['required', 'numeric', 'min:0.01'],
         ];
     }
 }

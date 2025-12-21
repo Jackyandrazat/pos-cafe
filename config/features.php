@@ -27,5 +27,10 @@ return [
             'description' => 'Manajemen customer dan poin reward otomatis.',
             'default' => true,
         ],
+        'kitchen_display' => [
+            'label' => 'Kitchen Display System',
+            'description' => 'Monitor pesanan dapur dan status produksi.',
+            'default' => true,
+        ],
     ],
 ];
