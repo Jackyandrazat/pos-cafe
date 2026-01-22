@@ -1,8 +1,8 @@
 Rekomendasi Fitur Lanjutan
 
-   1. Kitchen Display System (KDS) & Order Routing
+   <!-- 1. Kitchen Display System (KDS) & Order Routing
      •  Sinkronisasi langsung antara kasir dan barista/dapur, lengkap dengan prioritas,
-        status (in-progress, plating, ready), dan SLA per menu.
+        status (in-progress, plating, ready), dan SLA per menu. -->
 
    2. Multi-Outlet & Shift Analytics
      •  Cabang/stand berbeda dengan harga stok terpisah, plus panel per-shift untuk
@@ -28,8 +28,8 @@ Rekomendasi Fitur Lanjutan
       individual, serta materi SOP terintegrasi untuk onboarding cepat.
     7. Equipment & Maintenance Tracking: jadwal service mesin espresso/grinder, reminder
       penggunaan filter air, dan log kerusakan agar downtime terukur.
-    8. Gift Card & Corporate Account Support: penerbitan e-voucher/gift card terukur plus
-      akun korporasi dengan limit & tagihan bulanan.
+    <!-- 8. Gift Card & Corporate Account Support: penerbitan e-voucher/gift card terukur plus
+      akun korporasi dengan limit & tagihan bulanan. -->
 
 Versi -- lanjutan 1.2
     Dynamic Pricing & Promotions Engine: dukung happy hour, promo berbasis waktu/cuaca,

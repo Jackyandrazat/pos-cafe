@@ -11,6 +11,7 @@ use App\Http\Resources\Api\V1\OrderResource;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
+use App\Services\GamifiedLoyaltyService;
 use App\Services\GiftCardService;
 use App\Services\LoyaltyService;
 use App\Services\PromotionService;
@@ -27,6 +28,7 @@ class OrderController extends Controller
     public function __construct(
         protected GiftCardService $giftCardService,
         protected LoyaltyService $loyaltyService,
+        protected GamifiedLoyaltyService $gamifiedLoyaltyService,
     ) {
     }
 
@@ -170,7 +172,9 @@ class OrderController extends Controller
         }
 
         if (Feature::enabled('loyalty')) {
-            $this->loyaltyService->rewardOrderPoints($order->fresh('customer'));
+            $freshOrder = $order->fresh(['customer', 'items']);
+            $this->loyaltyService->rewardOrderPoints($freshOrder);
+            $this->gamifiedLoyaltyService->trackOrderProgress($freshOrder);
         }
 
         return (new OrderResource($order->load(['items.product', 'customer'])))

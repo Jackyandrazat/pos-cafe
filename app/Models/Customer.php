@@ -4,8 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Model as EloquentModel;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Customer extends Model
 {
@@ -35,6 +35,16 @@ class Customer extends Model
     public function pointTransactions(): HasMany
     {
         return $this->hasMany(CustomerPointTransaction::class);
+    }
+
+    public function challengeProgresses(): HasMany
+    {
+        return $this->hasMany(LoyaltyChallengeProgress::class);
+    }
+
+    public function challengeAwards(): HasMany
+    {
+        return $this->hasMany(LoyaltyChallengeAward::class);
     }
 
     public function addPoints(int $points, string $type, ?EloquentModel $source = null, ?string $description = null): void

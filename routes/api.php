@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Auth\GuestAuthController;
+use App\Http\Controllers\Api\V1\CustomerLoyaltyController;
 use App\Http\Controllers\Api\V1\MenuController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\OrderController;
@@ -33,5 +34,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/orders/{order}/payments', [PaymentController::class, 'index']);
         Route::post('/orders/{order}/payments', [PaymentController::class, 'store']);
         Route::get('/payments/{payment}', [PaymentController::class, 'show']);
+
+        Route::get('/customers/{customer}/loyalty/summary', [CustomerLoyaltyController::class, 'summary']);
     });
 });

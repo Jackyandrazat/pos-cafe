@@ -3,6 +3,8 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\CustomerResource\Pages;
+use App\Filament\Resources\CustomerResource\RelationManagers\ChallengeAwardsRelationManager;
+use App\Filament\Resources\CustomerResource\RelationManagers\ChallengeProgressesRelationManager;
 use App\Filament\Resources\CustomerResource\RelationManagers\CustomerPointTransactionsRelationManager;
 use App\Filament\Resources\CustomerResource\RelationManagers\OrdersRelationManager;
 use App\Models\Customer;
@@ -77,6 +79,8 @@ class CustomerResource extends Resource
         return [
             OrdersRelationManager::class,
             CustomerPointTransactionsRelationManager::class,
+            ChallengeProgressesRelationManager::class,
+            ChallengeAwardsRelationManager::class,
         ];
     }
 
