@@ -97,4 +97,8 @@ class Promotion extends Model
 
         return true;
     }
+    public function setCodeAttribute($value)
+    {
+        $this->attributes['code'] = strtoupper(trim($value));
+    }
 }

@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\OrderItemController;
 use App\Http\Controllers\Api\V1\OrderStatusController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\V1\PromotionController;
 
 Route::prefix('v1')->group(function () {
     // Public endpoints
@@ -36,5 +37,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/payments/{payment}', [PaymentController::class, 'show']);
 
         Route::get('/customers/{customer}/loyalty/summary', [CustomerLoyaltyController::class, 'summary']);
+
+        Route::get('/promotions', [PromotionController::class, 'index']);
+        Route::post('/promotions/validate', [PromotionController::class, 'validatePromo']);
     });
 });
