@@ -98,7 +98,7 @@ class PromotionController extends Controller
         // hitung diskon
         $discount = 0;
 
-        if ($promo->discount_type === 'nominal') {
+        if ($promo->type === 'fixed') {
             $discount = min($promo->discount_value, $subtotal);
         } else {
             // percentage

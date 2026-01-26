@@ -18,4 +18,11 @@ class OrderStatusController extends Controller
 
         return new OrderStatusResource($order->load('statusLogs'));
     }
+    public function timeline(Order $order)
+    {
+        return response()->json([
+            'data' => $order->timelines()->latest()->get()
+        ]);
+    }
+
 }
