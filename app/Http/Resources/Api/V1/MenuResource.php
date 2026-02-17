@@ -31,6 +31,9 @@ class MenuResource extends JsonResource
             'modifiers' => [],
             'created_at' => optional($this->created_at)->toIso8601String(),
             'updated_at' => optional($this->updated_at)->toIso8601String(),
+            'toppings' => ToppingResource::collection(
+                $this->whenLoaded('toppings')
+            ),
         ];
     }
 }

@@ -11,6 +11,7 @@ use App\Http\Resources\Api\V1\OrderResource;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\Topping;
 use App\Services\GamifiedLoyaltyService;
 use App\Services\GiftCardService;
 use App\Services\LoyaltyService;
@@ -96,14 +97,45 @@ class OrderController extends Controller
                 $qty = $item['quantity'];
                 $discount = min($item['discount_amount'] ?? 0, $product->price);
                 $effectivePrice = max($product->price - $discount, 0);
-                $subtotal = $effectivePrice * $qty;
+                $productSubtotal  = $effectivePrice * $qty;
 
-                $order->items()->create([
+                $orderItem = $order->items()->create([
                     'product_id' => $product->id,
                     'qty' => $qty,
                     'price' => $product->price,
                     'discount_amount' => $discount,
-                    'subtotal' => $subtotal,
+                    'subtotal' => 0,
+                ]);
+
+                $toppingsSubtotal = 0;
+                foreach ($item['toppings'] ?? [] as $topping) {
+
+                    $toppingModel = Topping::whereKey($topping['topping_id'])
+                        ->where('is_active', true)
+                        ->first();
+
+                    if (! $toppingModel) {
+                        abort(422, 'Invalid topping selected.');
+                    }
+
+                    $toppingQty = $topping['quantity'] ?? 1;
+                    $toppingSubtotal = $toppingModel->price * $toppingQty;
+
+                    $toppingsSubtotal += $toppingSubtotal;
+
+                    $orderItem->toppings()->create([
+                        'topping_id' => $toppingModel->id,
+                        'name' => $topping['name'],
+                        'quantity' => $toppingQty,
+                        'price' => $toppingModel->price,
+                        'total' => $toppingSubtotal,
+                    ]);
+                }
+
+                $totalItemSubtotal = $productSubtotal + $toppingsSubtotal;
+
+                $orderItem->update([
+                    'subtotal' => $totalItemSubtotal
                 ]);
             }
 
@@ -186,7 +218,7 @@ class OrderController extends Controller
     {
         $this->ensureOrderOwner($request->user(), $order);
 
-        return new OrderResource($order->load(['items.product', 'customer']));
+        return new OrderResource($order->load(['items.product','items.toppings', 'customer']));
     }
 
     public function submit(Request $request, Order $order): OrderResource
@@ -205,7 +237,7 @@ class OrderController extends Controller
 
         $order->status = OrderStatus::Pending->value;
         $order->save();
-        $order->logStatus(OrderStatus::Pending, 'Order submitted');
+        $order->logStatus(OrderStatus::Pending, 'Order submitted at the cashier');
 
         return new OrderResource($order->fresh(['items.product', 'customer']));
     }

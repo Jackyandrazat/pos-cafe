@@ -1,21 +1,23 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\V1\Auth\GuestAuthController;
+use App\Http\Controllers\Api\V1\CategoryController;
+use App\Http\Controllers\Api\V1\CustomerLoyaltyController;
+use App\Http\Controllers\Api\V1\GiftCardController;
 use App\Http\Controllers\Api\V1\MenuController;
 use App\Http\Controllers\Api\V1\OrderController;
-use App\Http\Controllers\Api\V1\PaymentController;
-use App\Http\Controllers\Api\V1\CategoryController;
-use App\Http\Controllers\Api\V1\GiftCardController;
 use App\Http\Controllers\Api\V1\OrderItemController;
-use App\Http\Controllers\Api\V1\PromotionController;
 use App\Http\Controllers\Api\V1\OrderStatusController;
-use App\Http\Controllers\Api\V1\Auth\GuestAuthController;
-use App\Http\Controllers\Api\V1\CustomerLoyaltyController;
+use App\Http\Controllers\Api\V1\PaymentController;
+use App\Http\Controllers\Api\V1\PromotionController;
+use App\Http\Controllers\Api\V1\ToppingController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
     // Public endpoints
     Route::get('/menus', [MenuController::class, 'index']);
+    Route::get('/toppings', [ToppingController::class, 'index']);
     Route::get('/menus/{product}', [MenuController::class, 'show']);
     Route::get('/categories', [CategoryController::class, 'index']);
 
@@ -41,6 +43,7 @@ Route::prefix('v1')->group(function () {
         Route::delete('/orders/{order}/items/{orderItem}', [OrderItemController::class, 'destroy']);
 
         Route::get('/orders/{order}/status', [OrderStatusController::class, 'show']);
+        // Route::patch('/orders/{order}/status', [OrderStatusController::class, 'update']);
         Route::get('/orders/{order}/timeline', [OrderStatusController::class, 'timeline']);
 
 
@@ -48,7 +51,11 @@ Route::prefix('v1')->group(function () {
         Route::post('/orders/{order}/payments', [PaymentController::class, 'store']);
         Route::get('/payments/{payment}', [PaymentController::class, 'show']);
 
-        Route::get('/customers/{customer}/loyalty/summary', [CustomerLoyaltyController::class, 'summary']);
+        Route::prefix('customers/{customer}/loyalty')->group(function () {
+            Route::get('/summary', [CustomerLoyaltyController::class, 'summary']);
+            Route::get('/challenges', [CustomerLoyaltyController::class, 'challenges']);
+            Route::get('/transactions', [CustomerLoyaltyController::class, 'transactions']);
+        });
 
         Route::post('/promotions/validate', [PromotionController::class, 'validatePromo']);
         Route::post('/giftcards/validate', [GiftCardController::class, 'validateGiftCard']);

@@ -26,4 +26,9 @@ class Topping extends Model
     {
         return $query->where('is_active', true);
     }
+
+    public function products()
+    {
+        return $this->belongsToMany(Product::class);
+    }
 }

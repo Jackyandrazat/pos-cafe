@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Http\Controllers\Controller;
-use App\Http\Resources\Api\V1\CustomerLoyaltySummaryResource;
-use App\Http\Resources\Api\V1\LoyaltyBadgeResource;
-use App\Http\Resources\Api\V1\LoyaltyChallengeResource;
 use App\Models\Customer;
-use App\Models\LoyaltyChallenge;
 use App\Support\Feature;
 use Illuminate\Http\Request;
+use App\Models\LoyaltyChallenge;
+use App\Http\Controllers\Controller;
+use App\Models\CustomerPointTransaction;
 use Symfony\Component\HttpFoundation\Response;
+use App\Http\Resources\Api\V1\LoyaltyBadgeResource;
+use App\Http\Resources\Api\V1\LoyaltyChallengeResource;
+use App\Http\Resources\Api\V1\CustomerLoyaltySummaryResource;
 
 class CustomerLoyaltyController extends Controller
 {
@@ -43,6 +44,40 @@ class CustomerLoyaltyController extends Controller
             'recent_badges' => LoyaltyBadgeResource::collection($customer->challengeAwards),
         ]);
     }
+
+    public function challenges(Customer $customer)
+    {
+        $challenges = LoyaltyChallenge::active()
+            ->with([
+                'progresses' => fn ($q) =>
+                    $q->where('customer_id', $customer->id),
+            ])
+            ->orderBy('name')
+            ->get();
+
+        return response()->json([
+            'data' => LoyaltyChallengeResource::collection($challenges),
+        ]);
+    }
+
+    public function transactions(Customer $customer)
+    {
+        return response()->json([
+            'data' => CustomerPointTransaction::where('customer_id', $customer->id)
+                ->latest()
+                ->limit(50)
+                ->get()
+                ->map(fn ($t) => [
+                    'id' => (string) $t->id,
+                    'type' => $t->points > 0 ? 'earn' : 'redeem',
+                    'points' => abs($t->points),
+                    'description' => $t->description,
+                    'created_at' => $t->created_at->toIso8601String(),
+                ]),
+        ]);
+    }
+
+
 
     protected function ensureModuleEnabled(): void
     {

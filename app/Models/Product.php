@@ -30,4 +30,8 @@ class Product extends Model
     {
         return $this->hasMany(ProductIngredient::class);
     }
+    public function toppings()
+    {
+        return $this->belongsToMany(Topping::class);
+    }
 }

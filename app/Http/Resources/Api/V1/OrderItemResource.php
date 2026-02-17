@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Http\Resources\Api\V1\ToppingResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class OrderItemResource extends JsonResource
@@ -18,6 +19,9 @@ class OrderItemResource extends JsonResource
             'unit_price' => (float) $this->price,
             'discount_amount' => (float) ($this->discount_amount ?? 0),
             'subtotal' => (float) $this->subtotal,
+            'toppings' => ToppingResource::collection(
+                $this->whenLoaded('toppings')
+            ),
         ];
     }
 }

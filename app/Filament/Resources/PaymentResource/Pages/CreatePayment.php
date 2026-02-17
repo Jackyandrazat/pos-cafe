@@ -5,12 +5,13 @@ namespace App\Filament\Resources\PaymentResource\Pages;
 use App\Models\Shift;
 use Filament\Actions;
 use App\Models\Payment;
+use App\Enums\OrderStatus;
 use App\Services\StockService;
+use Filament\Support\Exceptions\Halt;
 use Filament\Notifications\Notification;
 use App\Notifications\PaymentNotification;
 use Filament\Resources\Pages\CreateRecord;
 use App\Filament\Resources\PaymentResource;
-use Filament\Support\Exceptions\Halt;
 use Illuminate\Validation\ValidationException;
 
 class CreatePayment extends CreateRecord
@@ -80,6 +81,7 @@ class CreatePayment extends CreateRecord
             $order->update([
                 'status' => 'completed',
             ]);
+            $order->logStatus(OrderStatus::from(OrderStatus::Completed->value), 'Order marked as completed via payment.');
         }
         StockService::reduceIngredientsFromOrder($order);
     }

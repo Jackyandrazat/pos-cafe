@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateOrderRequest;
 use App\Http\Resources\Api\V1\OrderStatusResource;
+use App\Http\Resources\Api\V1\UpdateOrderStatusResource;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -25,4 +27,10 @@ class OrderStatusController extends Controller
         ]);
     }
 
+    public function update(UpdateOrderRequest $request, Order $order)
+    {
+        $order->update($request->validated());
+
+        return new UpdateOrderStatusResource($order);
+    }
 }
