@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Models\ProductSize;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\OrderItemTopping> $toppings
@@ -37,5 +38,9 @@ class OrderItem extends Model
     public function toppings()
     {
         return $this->hasMany(OrderItemTopping::class);
+    }
+    public function size()
+    {
+        return $this->belongsTo(ProductSize::class);
     }
 }
