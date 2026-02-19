@@ -12,7 +12,7 @@ class MenuController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
     {
-        $query = Product::query()->with(['category','toppings']);
+        $query = Product::query()->with(['category','toppings', 'sizes']);
 
         if ($request->filled('category_id')) {
             $query->where('category_id', $request->input('category_id'));
@@ -40,7 +40,7 @@ class MenuController extends Controller
 
     public function show(Product $product): MenuResource
     {
-        $product->load('category');
+        $product->load('category','toppings', 'sizes');
 
         return new MenuResource($product);
     }

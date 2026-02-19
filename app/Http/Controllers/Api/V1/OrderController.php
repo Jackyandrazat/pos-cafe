@@ -95,14 +95,40 @@ class OrderController extends Controller
                 }
 
                 $qty = $item['quantity'];
-                $discount = min($item['discount_amount'] ?? 0, $product->price);
-                $effectivePrice = max($product->price - $discount, 0);
-                $productSubtotal  = $effectivePrice * $qty;
+
+                // ==========================
+                // HANDLE SIZE
+                // ==========================
+                $sizeId = $item['size']['size_id'] ?? null;
+                $size = null;
+                $priceModifier = 0;
+
+                if ($sizeId) {
+                    $size = $product->sizes()
+                        ->where('id', $sizeId)
+                        ->first();
+
+                    if (! $size) {
+                        abort(Response::HTTP_UNPROCESSABLE_ENTITY, 'Invalid size selected.');
+                    }
+
+                    $priceModifier = $size->price_modifier;
+                }
+
+                // Base price + modifier
+                $basePrice = $product->price + $priceModifier;
+
+                // Discount tetap dari base price
+                $discount = min($item['discount_amount'] ?? 0, $basePrice);
+                $effectivePrice = max($basePrice - $discount, 0);
+
+                $productSubtotal = $effectivePrice * $qty;
 
                 $orderItem = $order->items()->create([
                     'product_id' => $product->id,
+                    'size_id' => $size->id,
                     'qty' => $qty,
-                    'price' => $product->price,
+                    'price' => $basePrice,
                     'discount_amount' => $discount,
                     'subtotal' => 0,
                 ]);
@@ -209,7 +235,7 @@ class OrderController extends Controller
             $this->gamifiedLoyaltyService->trackOrderProgress($freshOrder);
         }
 
-        return (new OrderResource($order->load(['items.product', 'customer'])))
+        return (new OrderResource($order->load(['items.product', 'customer', 'items.size', 'items.toppings'])))
             ->response()
             ->setStatusCode(Response::HTTP_CREATED);
     }

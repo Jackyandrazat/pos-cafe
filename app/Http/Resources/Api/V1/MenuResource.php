@@ -34,6 +34,11 @@ class MenuResource extends JsonResource
             'toppings' => ToppingResource::collection(
                 $this->whenLoaded('toppings')
             ),
+            'sizes' => $this->whenLoaded('sizes', function () {
+                return $this->sizes->map(function ($size) {
+                    return new SizeMenuResource($size, $this->price);
+                });
+            }),
         ];
     }
 }

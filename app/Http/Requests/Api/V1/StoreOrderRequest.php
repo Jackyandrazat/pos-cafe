@@ -32,6 +32,7 @@ class StoreOrderRequest extends FormRequest
             'items.*.toppings.*.quantity' => ['nullable', 'integer', 'min:1'],
             'items.*.toppings.*.name' => ['nullable', 'string', 'min:1'],
             'items.*.toppings.*.price' => ['nullable', 'integer', 'min:1'],
+            'items.*.size.size_id' => ['nullable', 'exists:product_sizes,id'],
 
         ];
     }

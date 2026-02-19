@@ -22,6 +22,7 @@ class OrderItemResource extends JsonResource
             'toppings' => ToppingResource::collection(
                 $this->whenLoaded('toppings')
             ),
+            'size' => new SizeMenuResource($this->whenLoaded('size')),
         ];
     }
 }
