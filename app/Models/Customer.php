@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Laravel\Sanctum\HasApiTokens;
 
 class Customer extends Model
 {
     use HasFactory;
+    use HasApiTokens;
 
     protected $fillable = [
         'name',
@@ -71,5 +73,9 @@ class Customer extends Model
             'source_type' => $source ? $source::class : null,
             'source_id' => $source?->getKey(),
         ]);
+    }
+    public function user()
+    {
+        return $this->hasOne(User::class);
     }
 }

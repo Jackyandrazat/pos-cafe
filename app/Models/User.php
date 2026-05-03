@@ -86,4 +86,8 @@ class User extends Authenticatable
     {
         return $this->roles()->whereIn('name', $roleNames)->exists();
     }
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
 }

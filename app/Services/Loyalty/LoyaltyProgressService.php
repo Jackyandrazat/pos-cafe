@@ -67,7 +67,7 @@ class LoyaltyProgressService
 
         if ($progress->completed_at) return;
 
-        $products = collect($order->items)->pluck('product_id')->unique();
+        $products = $order->items()->pluck('product_id')->unique();
 
         $meta = $progress->meta ?? [];
         $meta['latest_new_products'] = $products;

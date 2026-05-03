@@ -79,9 +79,9 @@ class CreatePayment extends CreateRecord
 
         if ($order) {
             $order->update([
-                'status' => 'completed',
+                'status' => 'payment',
             ]);
-            $order->logStatus(OrderStatus::from(OrderStatus::Completed->value), 'Order marked as completed via payment.');
+            $order->logStatus(OrderStatus::from(OrderStatus::Payment->value), 'Order marked as completed via payment.');
         }
         StockService::reduceIngredientsFromOrder($order);
     }

@@ -2,18 +2,19 @@
 
 namespace App\Filament\Resources;
 
-use Filament\Forms;
-use Filament\Tables;
-use App\Models\Purchase;
-use Filament\Forms\Form;
-use Filament\Tables\Table;
-use Filament\Resources\Resource;
-use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Exports\PurchaseExporter;
-use Filament\Tables\Actions\ExportBulkAction;
 use App\Filament\Resources\PurchaseResource\Pages;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\PurchaseResource\RelationManagers;
+use App\Models\Purchase;
+use Filament\Forms;
+use Filament\Forms\Form;
+use Filament\Resources\Resource;
+use Filament\Tables;
+use Filament\Tables\Actions\ExportBulkAction;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Auth;
 
 class PurchaseResource extends Resource
 {
@@ -30,7 +31,12 @@ class PurchaseResource extends Resource
            ->schema([
                 Forms\Components\Select::make('user_id')
                     ->label('Pembeli/Admin')
-                    ->relationship('user', 'name')
+                    ->default(fn () => Auth::id())
+                    ->relationship('user', 'name', function ($query) {
+                        return $query->whereHas('roles', function ($q) {
+                            $q->whereIn('name', ['kasir', 'admin']);
+                        });
+                    })
                     ->required(),
 
                 Forms\Components\TextInput::make('invoice_number')

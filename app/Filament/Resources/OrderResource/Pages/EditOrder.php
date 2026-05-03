@@ -61,12 +61,20 @@ class EditOrder extends EditRecord
             }
         });
 
+        if ($this->record->table_id) {
+            $this->record->table?->update([
+                'status' => 'occupied'
+            ]);
+        }
+
         // Clear session setelah simpan
         if (Feature::enabled('promotions')) {
             PromotionService::syncUsage($order);
         }
 
         session()->forget('selected_order_items');
+        // $this->redirect($this->getResource()::getUrl('create'));
+        $this->dispatch('resetOrderItems');
     }
 
     protected function mutateFormDataBeforeSave(array $data): array

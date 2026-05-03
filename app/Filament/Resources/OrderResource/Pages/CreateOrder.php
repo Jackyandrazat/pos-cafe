@@ -93,11 +93,14 @@ class CreateOrder extends CreateRecord
             }
         }
 
+        if ($this->record->table_id) {
+            $this->record->table?->update([
+                'status' => 'occupied'
+            ]);
+        }
         if (Feature::enabled('promotions')) {
             PromotionService::syncUsage($this->record);
         }
-
-        session()->forget('selected_order_items');
 
         if (Feature::enabled('loyalty')) {
             $this->record->load('customer');
@@ -133,6 +136,9 @@ class CreateOrder extends CreateRecord
 
             $this->pendingGiftCardRedemption = null;
         }
+        session()->forget('selected_order_items');
+        // $this->redirect($this->getResource()::getUrl('create'));
+        // $this->dispatch('resetOrderItems');
     }
 
     protected function mutateFormDataBeforeCreate(array $data): array

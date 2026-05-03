@@ -37,7 +37,9 @@ class KitchenDisplay extends Page
             'completed' => [OrderStatus::Completed->value],
             default => [
                 OrderStatus::Pending->value,
+                OrderStatus::Draft->value,
                 OrderStatus::Confirmed->value,
+                OrderStatus::Payment->value,
                 OrderStatus::Preparing->value,
             ],
         };

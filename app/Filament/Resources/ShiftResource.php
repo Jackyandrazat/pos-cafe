@@ -2,19 +2,17 @@
 
 namespace App\Filament\Resources;
 
-use Filament\Forms;
-use App\Models\User;
-use Filament\Tables;
-use App\Models\Shift;
-use Filament\Forms\Form;
-use Filament\Tables\Table;
-use Filament\Resources\Resource;
 use App\Filament\Exports\ShiftExporter;
-use Illuminate\Database\Eloquent\Builder;
-use Filament\Tables\Actions\ExportBulkAction;
 use App\Filament\Resources\ShiftResource\Pages;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use App\Filament\Resources\ShiftResource\RelationManagers;
+use App\Models\Shift;
+use App\Models\User;
+use Filament\Forms;
+use Filament\Forms\Form;
+use Filament\Resources\Resource;
+use Filament\Tables;
+use Filament\Tables\Actions\ExportBulkAction;
+use Filament\Tables\Table;
+use Illuminate\Support\Facades\Auth;
 
 class ShiftResource extends Resource
 {
@@ -31,7 +29,12 @@ class ShiftResource extends Resource
             ->schema([
                 Forms\Components\Select::make('user_id')
                     ->label('Kasir')
-                    ->relationship('user', 'name')
+                    ->default(fn () => Auth::id())
+                    ->relationship('user', 'name', function ($query) {
+                        return $query->whereHas('roles', function ($q) {
+                            $q->whereIn('name', ['kasir', 'admin']);
+                        });
+                    })
                     ->required(),
 
                 Forms\Components\DateTimePicker::make('shift_open_time')

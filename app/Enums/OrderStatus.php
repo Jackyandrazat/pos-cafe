@@ -7,6 +7,7 @@ enum OrderStatus: string
     case Draft = 'draft';
     case Pending = 'pending';
     case Submitted = 'submitted';
+    case Payment = 'payment';
     case Confirmed = 'confirmed';
     case Preparing = 'preparing';
     case Ready = 'ready';
@@ -24,6 +25,7 @@ enum OrderStatus: string
             self::Draft => 'Draft',
             self::Pending => 'Pending',
             self::Submitted => 'Submitted',
+            self::Payment => 'Payment',
             self::Confirmed => 'Confirmed',
             self::Preparing => 'Preparing',
             self::Ready => 'Ready',

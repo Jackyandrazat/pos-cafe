@@ -17,9 +17,9 @@ class LoyaltyRewardService
 
         // bonus points
         if ($challenge->bonus_points > 0) {
-            app(LoyaltyService::class)->redeemPoints(
+            app(LoyaltyService::class)->addBonusPoints(
                 $customer,
-                -$challenge->bonus_points,
+                $challenge->bonus_points,
                 'Bonus: ' . $challenge->name
             );
         }

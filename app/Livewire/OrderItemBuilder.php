@@ -17,7 +17,7 @@ class OrderItemBuilder extends Component
     public $selectedToppingIds = [];
     public $selectedItems = [];
     public $orderId;
-
+    protected $listeners = ['resetOrderItems'];
     public function mount($orderId = null)
     {
         $this->products = Product::all();
@@ -51,12 +51,10 @@ class OrderItemBuilder extends Component
                 })->toArray();
 
                 $this->selectedItems = array_values($this->selectedItems);
-                $this->updateSession();
             }
         } else {
             $this->selectedItems = session('selected_order_items', []);
             $this->selectedItems = array_values($this->selectedItems);
-            $this->updateSession();
         }
 
     }
@@ -133,5 +131,12 @@ class OrderItemBuilder extends Component
         return view('livewire.order-item-builder', [
         'totalSubtotal' => collect($this->selectedItems)->sum('subtotal'),
         ]);
+    }
+
+    public function resetOrderItems()
+    {
+        if (!$this->orderId) {
+            $this->selectedItems = [];
+        }
     }
 }

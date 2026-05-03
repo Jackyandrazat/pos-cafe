@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Auth\GuestAuthController;
+use App\Http\Controllers\Api\V1\Auth\MemberAuthController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\CustomerLoyaltyController;
 use App\Http\Controllers\Api\V1\GiftCardController;
@@ -22,6 +23,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/categories', [CategoryController::class, 'index']);
 
     Route::post('/auth/guest', [GuestAuthController::class, 'store']);
+    Route::post('/auth/member', [MemberAuthController::class, 'login']);
     Route::get('/promotions', [PromotionController::class, 'index']);
 
     Route::middleware('auth:sanctum')->get('/auth/validate', function (Request $request) {

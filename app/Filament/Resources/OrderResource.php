@@ -53,12 +53,13 @@ class OrderResource extends Resource
                     $current = $get('table_id');
 
                     return CafeTable::query()
-                        ->where(function ($query) use ($current) {
-                            $query->whereIn('status', ['available', 'reserved']);
-
-                            if ($current) {
-                                $query->orWhere('id', $current);
-                            }
+                        ->when($current, function ($query) use ($current) {
+                            $query->where(function ($q) use ($current) {
+                                $q->where('status', 'available')
+                                  ->orWhere('id', $current);
+                            });
+                        }, function ($query) {
+                            $query->where('status', 'available');
                         })
                         ->orderBy('table_number')
                         ->pluck('table_number', 'id');
@@ -72,10 +73,10 @@ class OrderResource extends Resource
             Forms\Components\Select::make('order_type')
                 ->label('Tipe Order')
                 ->options([
-                    'dine_in' => 'Dine In',
-                    'take_away' => 'Take Away',
-                    'delivery' => 'Delivery',
-                ])
+                                    'dine_in' => 'Dine In',
+                                    'take_away' => 'Take Away',
+                                    'delivery' => 'Delivery',
+                                ])
                 ->required(),
 
             Forms\Components\TextInput::make('customer_name')
