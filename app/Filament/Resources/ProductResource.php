@@ -14,6 +14,8 @@ use Filament\Tables\Actions\ExportBulkAction;
 use App\Filament\Resources\ProductResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\ProductResource\RelationManagers;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 
 class ProductResource extends Resource
 {
@@ -42,6 +44,14 @@ class ProductResource extends Resource
                 ->label('SKU')
                 ->maxLength(50)
                 ->unique(ignoreRecord: true),
+            SpatieMediaLibraryFileUpload::make('product_image')
+                ->label('Foto Produk')
+                ->collection('product')
+                ->image()
+                ->imageEditor()
+                ->directory('products')
+                ->maxSize(2048)
+                ->helperText('Upload gambar produk maksimal 2MB'),
 
             Forms\Components\Repeater::make('ingredients')
                 ->label('Komposisi Bahan')
@@ -94,6 +104,10 @@ class ProductResource extends Resource
     {
         return $table
             ->columns([
+                SpatieMediaLibraryImageColumn::make('product')
+                    ->label('Foto')
+                    ->collection('product')
+                    ->circular(),
                 Tables\Columns\TextColumn::make('name')
                     ->label('Nama Produk')
                     ->searchable()

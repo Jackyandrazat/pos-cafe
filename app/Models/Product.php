@@ -7,11 +7,16 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Image\Enums\Fit;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Product extends Model
+class Product extends Model implements HasMedia
 {
     /** @use HasFactory<\Database\Factories\ProductFactory> */
     use HasFactory;
+    use InteractsWithMedia;
     use SoftDeletes;
     protected $fillable = ['category_id', 'name', 'sku', 'price', 'cost_price', 'stock_qty', 'description', 'status_enabled'];
 
@@ -38,5 +43,26 @@ class Product extends Model
     public function sizes()
     {
         return $this->hasMany(ProductSize::class);
+    }
+     public function registerMediaCollections(): void
+    {
+        $this
+            ->addMediaCollection('product')
+            ->singleFile();
+    }
+
+    /**
+     * THUMBNAIL CONVERSION
+     */
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this
+            ->addMediaConversion('thumb')
+            ->fit(Fit::Crop, 300, 300)
+            ->nonQueued();
+        $this
+            ->addMediaConversion('web')
+            ->width(1200)
+            ->quality(80);
     }
 }
