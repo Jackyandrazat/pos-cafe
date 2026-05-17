@@ -126,7 +126,7 @@ class OrderController extends Controller
 
                 $orderItem = $order->items()->create([
                     'product_id' => $product->id,
-                    'size_id' => $size->id,
+                    'size_id' => $size->id ?? null,
                     'qty' => $qty,
                     'price' => $basePrice,
                     'discount_amount' => $discount,

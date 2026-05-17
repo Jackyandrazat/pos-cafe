@@ -29,7 +29,10 @@ class MemberAuthController extends Controller
             }
 
             // 2️⃣ Cek apakah sudah punya user
-            $user = User::where('customer_id', $customer->id)->first();
+            $user = User::where('customer_id', $customer->id)
+                ->orWhere('email', $customer->email)
+                ->orWhere('phone', $customer->phone)
+                ->first();
 
             if (!$user) {
                 // 3️⃣ Buat user baru dari customer
