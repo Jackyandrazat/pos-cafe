@@ -29,6 +29,25 @@ class GiftCardFactory extends Factory
         ];
     }
 
+    public function giftCard(): self
+    {
+        return $this->state(fn () => [
+            'type' => 'gift_card',
+            'company_name' => null,
+            'company_contact' => null,
+        ]);
+    }
+
+    public function corporate(): self
+    {
+        return $this->state(fn () => [
+            'type' => 'corporate',
+            'code' => strtoupper($this->faker->bothify('CORP####')),
+            'company_name' => $this->faker->company(),
+            'company_contact' => $this->faker->name() . ' (' . $this->faker->phoneNumber() . ')',
+        ]);
+    }
+
     public function exhausted(): self
     {
         return $this->state(fn () => [

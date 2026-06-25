@@ -79,7 +79,9 @@ class DatabaseSeeder extends Seeder
             OrderItemSeeder::class,
             PaymentSeeder::class,
             ProductToppingSeeder::class,
-            ProductSizeSeeder::class
+            ProductSizeSeeder::class,
+            PromotionSeeder::class,
+            GiftCardSeeder::class,
         ]);
     }
 }

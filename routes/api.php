@@ -57,6 +57,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/summary', [CustomerLoyaltyController::class, 'summary']);
             Route::get('/challenges', [CustomerLoyaltyController::class, 'challenges']);
             Route::get('/transactions', [CustomerLoyaltyController::class, 'transactions']);
+            Route::get('/rewards', [CustomerLoyaltyController::class, 'rewards']);
         });
 
         Route::post('/promotions/validate', [PromotionController::class, 'validatePromo']);

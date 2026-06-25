@@ -14,6 +14,7 @@ class PromotionController extends Controller
         $now = Carbon::now();
 
         $promos = Promotion::query()
+            ->withCount('usages')
             ->where('is_active', true)
             ->where(function ($q) use ($now) {
                 $q->whereNull('starts_at')->orWhere('starts_at', '<=', $now);
@@ -51,10 +52,10 @@ class PromotionController extends Controller
         }
 
         // cek periode berlaku
-        if ($promo->start_at && $now->lt($promo->start_at)) {
+        if ($promo->starts_at && $now->lt($promo->starts_at)) {
             return response()->json(['message' => 'Promo belum berlaku'], 422);
         }
-        if ($promo->end_at && $now->gt($promo->end_at)) {
+        if ($promo->ends_at && $now->gt($promo->ends_at)) {
             return response()->json(['message' => 'Promo sudah berakhir'], 422);
         }
 
@@ -66,17 +67,17 @@ class PromotionController extends Controller
         }
 
         // cek batas global
-        if (!is_null($promo->global_limit) && $promo->used_count >= $promo->global_limit) {
+        $usedCount = $promo->usages()->count();
+        if (!is_null($promo->usage_limit) && $usedCount >= $promo->usage_limit) {
             return response()->json([
                 'message' => 'Promo sudah mencapai batas penggunaan'
             ], 422);
         }
 
         // cek jadwal dinamis (optional)
-        // kalau active_days kosong -> dianggap berlaku setiap hari
-        if (is_array($promo->active_days) && count($promo->active_days) > 0) {
-            $day = strtolower($now->format('l')); // monday, tuesday, ...
-            if (!in_array($day, $promo->active_days)) {
+        if (is_array($promo->schedule_days) && count($promo->schedule_days) > 0) {
+            $dayOfWeek = $now->dayOfWeekIso; // 1-7 (Monday to Sunday)
+            if (!in_array($dayOfWeek, array_map('intval', $promo->schedule_days), true)) {
                 return response()->json([
                     'message' => 'Promo tidak berlaku hari ini'
                 ], 422);
@@ -84,11 +85,16 @@ class PromotionController extends Controller
         }
 
         // cek jam berlaku (optional)
-        if ($promo->start_time && $promo->end_time) {
+        if ($promo->schedule_start_time && $promo->schedule_end_time) {
             $currentTime = $now->format('H:i:s');
 
-            // NOTE: handle range normal, tidak handle "melewati tengah malam" (nanti bisa ditambah)
-            if (!($currentTime >= $promo->start_time && $currentTime <= $promo->end_time)) {
+            if ($promo->schedule_start_time > $promo->schedule_end_time) {
+                $inWindow = $currentTime >= $promo->schedule_start_time || $currentTime <= $promo->schedule_end_time;
+            } else {
+                $inWindow = $currentTime >= $promo->schedule_start_time && $currentTime <= $promo->schedule_end_time;
+            }
+
+            if (!$inWindow) {
                 return response()->json([
                     'message' => 'Promo tidak berlaku pada jam ini'
                 ], 422);

@@ -64,6 +64,7 @@ class MemberAuthController extends Controller
                     'name' => $user->name,
                     'phone' => $user->phone,
                     'is_guest' => $user->is_guest,
+                    'customer_id' => $user->customer_id,
                 ],
                 'customer' => [
                     'id' => $customer->id,
