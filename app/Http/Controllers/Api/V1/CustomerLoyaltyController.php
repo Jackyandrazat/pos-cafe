@@ -77,7 +77,32 @@ class CustomerLoyaltyController extends Controller
         ]);
     }
 
+    public function rewards(Customer $customer)
+    {
+        $this->ensureModuleEnabled();
 
+        $awards = $customer->challengeAwards()
+            ->with('challenge')
+            ->latest('awarded_at')
+            ->get();
+
+        $iconMap = [
+            'badge_loyal_regular' => '🏆',
+            'badge_menu_explorer' => '🧭',
+        ];
+
+        return response()->json([
+            'data' => $awards->map(fn ($award) => [
+                'id' => (string) $award->id,
+                'program_id' => (string) ($award->loyalty_challenge_id ?? '2'),
+                'name' => $award->badge_name ?? 'Reward',
+                'description' => $award->challenge?->description ?? ('Diberikan pada ' . $award->awarded_at->translatedFormat('d M Y')),
+                'points_required' => 0,
+                'icon' => $iconMap[$award->badge_code] ?? ($award->badge_icon ?: '🏆'),
+                'is_available' => true,
+            ])
+        ]);
+    }
 
     protected function ensureModuleEnabled(): void
     {
