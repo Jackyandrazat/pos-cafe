@@ -3,29 +3,52 @@
 namespace App\Services\Payments;
 
 use App\Models\Order;
-use Illuminate\Support\Arr;
 
 class PaymentGatewayManager
 {
-    /** @var array<string, PaymentGateway> */
-    protected array $gateways;
+    protected PaymentGatewayInterface $gateway;
 
     public function __construct()
     {
-        $this->gateways = [
-            'qris' => new QrisGateway('qris'),
-            'ewallet' => new QrisGateway('ewallet'),
-        ];
+        $mode = config('payment.mode', 'manual');
+        $this->gateway = $this->resolveGateway($mode);
     }
 
-    public function createCharge(string $method, Order $order, float $amount): array
+    /**
+     * Resolve gateway driver berdasarkan mode dari config.
+     */
+    protected function resolveGateway(string $mode): PaymentGatewayInterface
     {
-        $gateway = Arr::get($this->gateways, $method);
+        return match ($mode) {
+            'manual'   => app(ManualGateway::class),
+            'midtrans' => new MidtransGateway(),
+            'doku'     => new DokuGateway(),
+            'sandbox'  => new SandboxGateway(),  // untuk testing
+            default    => throw new \InvalidArgumentException("Mode pembayaran tidak dikenal: {$mode}"),
+        };
+    }
 
-        if (! $gateway) {
-            throw new \InvalidArgumentException("Unsupported payment method: {$method}");
-        }
+    /**
+     * Buat charge untuk order.
+     */
+    public function createCharge(string $method, Order $order, float $amount, ?string $channel = null): array
+    {
+        return $this->gateway->createCharge($order, $amount, $method, $channel);
+    }
 
-        return $gateway->createCharge($order, $amount);
+    /**
+     * Tangani notifikasi webhook dari payment gateway.
+     */
+    public function handleWebhook(array $payload): array
+    {
+        return $this->gateway->handleWebhook($payload);
+    }
+
+    /**
+     * Apakah mode saat ini membutuhkan konfirmasi manual oleh kasir?
+     */
+    public function requiresManualConfirmation(): bool
+    {
+        return config('payment.mode', 'manual') === 'manual';
     }
 }
