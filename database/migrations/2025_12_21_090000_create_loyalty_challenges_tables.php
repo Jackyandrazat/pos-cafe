@@ -102,6 +102,24 @@ return new class extends Migration {
                 'created_at' => $now,
                 'updated_at' => $now,
             ],
+            [
+                'name' => 'Pecinta Dessert',
+                'slug' => 'dessert-lover',
+                'type' => 'new_variant', // jenis tipe challenge
+                'description' => 'Beli 3 variant dessert baru untuk mendapatkan badge Sweet Tooth.',
+                'target_value' => 3,
+                'bonus_points' => 80,
+                'reset_period' => 'none',
+                'badge_name' => 'Sweet Tooth',
+                'badge_code' => 'badge_sweet_tooth',
+                'badge_color' => '#EC4899', // pink
+                'badge_icon' => '🎂',
+                'config' => null,
+                'is_active' => true,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]
+
         ]);
     }
 

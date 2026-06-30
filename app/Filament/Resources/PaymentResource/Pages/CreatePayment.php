@@ -2,28 +2,30 @@
 
 namespace App\Filament\Resources\PaymentResource\Pages;
 
-use App\Models\Shift;
-use Filament\Actions;
-use App\Models\Payment;
-use App\Enums\OrderStatus;
-use App\Services\StockService;
-use Filament\Support\Exceptions\Halt;
+use App\Models\Order;
+use App\Models\User;
+use App\Services\Payments\PaymentService;
 use Filament\Notifications\Notification;
-use App\Notifications\PaymentNotification;
 use Filament\Resources\Pages\CreateRecord;
 use App\Filament\Resources\PaymentResource;
+use Filament\Support\Exceptions\Halt;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\ValidationException;
 
 class CreatePayment extends CreateRecord
 {
     protected static string $resource = PaymentResource::class;
 
+    /**
+     * Validasi awal + siapkan data shift sebelum create.
+     * Tidak boleh buat record di sini — Filament masih akan memanggil handleRecordCreation.
+     */
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $data['payment_date'] = now();
-        $user = auth()->user();
+        $user        = auth()->user();
         $activeShift = $user->activeShift();
 
+        // Cek shift aktif
         if (! $activeShift) {
             Notification::make()
                 ->danger()
@@ -32,57 +34,75 @@ class CreatePayment extends CreateRecord
                 ->send();
 
             $this->addError('order_id', 'Kasir harus membuka shift sebelum membuat pembayaran.');
-
             throw new Halt();
         }
 
-        $data['shift_id'] = $activeShift->id;
-        $orderForPaymentExist = \App\Models\Order::find($data['order_id'] ?? null);
+        // Cek order valid
+        $order = Order::find($data['order_id'] ?? null);
 
-        if ($orderForPaymentExist && $orderForPaymentExist->status === 'completed') {
-            throw ValidationException::withMessages([
-                'order_id' => 'Order sudah selesai, tidak bisa dibuat pembayaran.',
-            ]);
+        if (! $order) {
+            throw ValidationException::withMessages(['order_id' => 'Order tidak ditemukan.']);
         }
+
+        if (in_array($order->status, ['completed', 'cancelled'])) {
+            throw ValidationException::withMessages(['order_id' => 'Order sudah selesai atau dibatalkan.']);
+        }
+
+        // Sisipkan shift_id ke data agar bisa digunakan di handleRecordCreation
+        $data['_shift_id'] = $activeShift->id;
+
         return $data;
     }
 
-    protected function afterCreate(): void
+    /**
+     * Delegasikan pembuatan record ke PaymentService.
+     * Filament akan menggunakan record yang dikembalikan untuk redirect.
+     */
+    protected function handleRecordCreation(array $data): Model
     {
-        $payment = $this->record;
-        // $order = $payment->order;
-        $order = $payment->order()->with('order_items.product.ingredients.ingredient')->first();
-        // dd($order);
+        $user     = auth()->user();
+        $shiftId  = $data['_shift_id'] ?? null;
+        $order    = Order::findOrFail($data['order_id']);
 
-        $kasir = auth()->user(); // kasir yang login
-        $payment->change_return = max(($payment->amount_paid ?? 0) - ($order->total_order ?? 0), 0);
-        $totalBayar = $payment->amount_paid;
-        $payment->save();
-        $admin = \App\Models\User::first(); // sementara ambil user pertama
+        try {
+            $paymentData = [
+                'payment_method'  => $data['payment_method'],
+                'payment_channel' => $data['payment_channel'] ?? null,
+                'amount'          => (float) $data['amount_paid'],
+            ];
 
-        if ($admin) {
-            \Filament\Notifications\Notification::make()
-                ->title('Pembayaran Berhasil')
-                ->body("Pembayaran sebesar Rp " . number_format($totalBayar, 0, ',', '.') . " berhasil dilakukan oleh kasir {$kasir->name}.")
-                ->success()
-                ->sendToDatabase($admin);
+            $payment = app(PaymentService::class)->process($order, $paymentData, $shiftId);
+
+            // Notifikasi database ke admin
+            $admin = User::first();
+            if ($admin) {
+                Notification::make()
+                    ->title('Pembayaran Diterima')
+                    ->body("Rp " . number_format($payment->amount_paid, 0, ',', '.') . " via " . strtoupper($payment->payment_method) . " oleh {$user->name}.")
+                    ->success()
+                    ->sendToDatabase($admin);
+            }
+
+            return $payment;
+        } catch (\DomainException $e) {
+            Notification::make()->title($e->getMessage())->danger()->send();
+            throw new Halt();
         }
-        // $recipient = auth()->user();
-        // $adminUser = \App\Models\User::find(1);
+    }
 
-        // if ($recipient) {
-        //     $recipient->notify(new PaymentNotification($payment));
-        // }
-        // if ($adminUser) {
-        //     $adminUser->notify(new PaymentNotification($payment));
-        // }
+    /**
+     * Setelah berhasil, redirect ke daftar pembayaran (bukan ke halaman edit).
+     */
+    protected function getRedirectUrl(): string
+    {
+        return PaymentResource::getUrl('index');
+    }
 
-        if ($order) {
-            $order->update([
-                'status' => 'payment',
-            ]);
-            $order->logStatus(OrderStatus::from(OrderStatus::Payment->value), 'Order marked as completed via payment.');
-        }
-        StockService::reduceIngredientsFromOrder($order);
+    /**
+     * Override notifikasi sukses dengan label Bahasa Indonesia.
+     */
+    protected function getCreatedNotificationTitle(): ?string
+    {
+        return 'Pembayaran berhasil dibuat';
     }
 }

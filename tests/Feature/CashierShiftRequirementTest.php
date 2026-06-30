@@ -111,7 +111,8 @@ class CashierShiftRequirementTest extends TestCase
         $this->assertNotNull($payment);
         $this->assertEquals($shift->id, $payment->shift_id);
         $order->refresh();
-        $this->assertEquals(OrderStatus::Completed->value, $order->status);
+        // Setelah bayar cash, order berstatus 'payment' (menandai pembayaran diterima)
+        $this->assertEquals(OrderStatus::Payment->value, $order->status);
     }
 
     protected function createKasirUser(): User

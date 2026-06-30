@@ -14,8 +14,17 @@ class StorePaymentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'payment_method' => ['required', 'in:cash,qris,transfer,ewallet'],
-            'amount' => ['required', 'numeric', 'min:0.01'],
+            'payment_method'  => ['required', 'in:cash,qris,transfer,ewallet'],
+            'payment_channel' => ['nullable', 'string', 'max:50'],
+            'amount'          => ['required', 'numeric', 'min:0.01'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'payment_method.in' => 'Metode pembayaran tidak valid. Pilih: cash, qris, transfer, atau ewallet.',
+            'amount.min'        => 'Jumlah pembayaran minimal Rp 1.',
         ];
     }
 }
