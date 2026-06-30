@@ -1,0 +1,205 @@
+/* ─────────────────────────────────────────────────────────────────────
+   POS Cafe — Filament Sidebar Custom CSS
+   ───────────────────────────────────────────────────────────────────── */
+
+/* ── Smooth collapse transition ─────────────────────────────────────── */
+.fi-sidebar {
+    transition: width 280ms cubic-bezier(0.4, 0, 0.2, 1),
+        transform 280ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* ── Pin Button Styling (Absolute & Replaces Collapse Button) ────────── */
+#pos-pin-btn {
+    position: absolute;
+    top: 50%;
+    right: 1rem;
+    transform: translateY(-50%);
+    z-index: 50;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.375rem;
+    /* 6px */
+    border: 1px solid rgba(156, 163, 175, 0.25);
+    background: transparent;
+    color: rgba(107, 114, 128, 0.7);
+    cursor: pointer;
+    transition: all 150ms ease;
+    flex-shrink: 0;
+}
+
+/* Sembunyikan tombol collapse bawaan (<) di header sidebar */
+.fi-sidebar-header button:not(#pos-pin-btn) {
+    display: none !important;
+}
+
+/* Dark mode default state */
+.dark #pos-pin-btn {
+    color: rgba(156, 163, 175, 0.7);
+    border-color: rgba(156, 163, 175, 0.2);
+}
+
+/* Hover state */
+#pos-pin-btn:hover {
+    background: rgba(156, 163, 175, 0.1);
+    color: rgb(55, 65, 81);
+    border-color: rgba(156, 163, 175, 0.4);
+}
+
+.dark #pos-pin-btn:hover {
+    background: rgba(156, 163, 175, 0.15);
+    color: rgb(243, 244, 246);
+    border-color: rgba(156, 163, 175, 0.3);
+}
+
+/* Pinned (Active) state - Matches Amber/Yellow Accent */
+#pos-pin-btn.is-pinned {
+    background: rgb(217, 119, 6);
+    /* amber-600 */
+    color: #ffffff !important;
+    border-color: rgb(217, 119, 6);
+    box-shadow: 0 1px 3px rgba(217, 119, 6, 0.2);
+}
+
+.dark #pos-pin-btn.is-pinned {
+    background: rgb(245, 158, 11);
+    /* amber-500 */
+    color: #ffffff !important;
+    border-color: rgb(245, 158, 11);
+    box-shadow: 0 1px 3px rgba(245, 158, 11, 0.2);
+}
+
+/* ── Align layout elements on the header ───────────────────────────── */
+.fi-sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    padding-right: 3.5rem !important;
+    /* Beri ruang agar teks brand tidak menumpuk dengan tombol pin */
+}
+
+/* Make sure the brand text wrapper wraps nicely */
+.fi-sidebar-header>a {
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── Ribbon Tab Button (Pita Pembatas Buku) ─────────────────────────── */
+#pos-sidebar-tab {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 0;
+    /* Default position when sidebar is collapsed */
+    z-index: 29;
+    /* Sits just above main layout, side-by-side with sidebar trigger boundaries */
+
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    padding: 1.5rem 0.55rem 1.25rem 0.55rem;
+
+    /* Gold/Yellow Theme matching the image */
+    background: #040300;
+    /* yellow-200 */
+    color: #ffffff;
+    /* dark blue/indigo text */
+    font-weight: 600;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+
+    /* Rounded corners only on the right edge */
+    border-radius: 0 0.85rem 0.85rem 0;
+    border: 1.5px solid #fef08a;
+    border-left: none;
+
+    cursor: pointer;
+    box-shadow: 3px 0 12px rgba(0, 0, 0, 0.12);
+    user-select: none;
+    outline: none;
+    transition: left 280ms cubic-bezier(0.4, 0, 0.2, 1),
+        background-color 200ms ease,
+        color 200ms ease,
+        box-shadow 200ms ease;
+}
+
+/* Hover state */
+#pos-sidebar-tab:hover {
+    background: #fde047;
+    /* yellow-300 */
+    color: #0f172a;
+    box-shadow: 5px 0 16px rgba(0, 0, 0, 0.18);
+}
+
+/* Vertical Text Formatting (Bottom to Top reading direction) */
+#pos-sidebar-tab span {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+    text-transform: uppercase;
+}
+
+/* Dynamic shifting when sidebar is active */
+body.fi-sidebar-open #pos-sidebar-tab,
+body.pos-sidebar-open #pos-sidebar-tab {
+    left: var(--sidebar-width, 20rem);
+    /* Moves perfectly with open sidebar width */
+}
+
+/* Dark Mode Adjustments for the Tab */
+.dark #pos-sidebar-tab {
+    background: #eab308;
+    /* amber-500 */
+    color: #0f172a;
+    /* deep slate dark text */
+    border-color: #eab308;
+    box-shadow: 3px 0 14px rgba(0, 0, 0, 0.3);
+}
+
+.dark #pos-sidebar-tab:hover {
+    background: #ca8a04;
+    /* amber-600 */
+    color: #ffffff;
+}
+
+/* Small screen fallback adjustments */
+@media (max-width: 640px) {
+    #pos-sidebar-tab {
+        padding: 1.25rem 0.45rem 1rem 0.45rem;
+        font-size: 0.68rem;
+    }
+}
+
+/* ── Toast Notification ──────────────────────────────────────────────── */
+#pos-sb-toast {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(0.75rem);
+    background: rgba(15, 23, 42, 0.95);
+    color: #f8fafc;
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 0.5rem 1.1rem;
+    border-radius: 9999px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 220ms ease, transform 220ms ease;
+    z-index: 9999;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#pos-sb-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}

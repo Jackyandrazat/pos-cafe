@@ -18,20 +18,28 @@ class QrisGenerator extends Page implements HasForms
 {
     use InteractsWithForms;
 
-    protected static ?string $navigationIcon  = 'heroicon-o-qr-code';
+    protected static ?string $navigationIcon = 'heroicon-o-qr-code';
+
     protected static ?string $navigationLabel = 'Konfigurasi QRIS';
+
     protected static ?string $navigationGroup = 'Pembayaran';
-    protected static ?int    $navigationSort  = 2;
-    protected static ?string $title           = 'Konfigurasi QRIS';
-    protected static string  $view            = 'filament.pages.qris-generator';
+
+    protected static ?int $navigationSort = 2;
+
+    protected static ?string $title = 'Konfigurasi QRIS';
+
+    protected static string $view = 'filament.pages.qris-generator';
 
     public ?array $data = [];
 
     /** SVG QR code hasil preview test generate. */
-    public ?string $previewQrSvg    = null;
-    public ?string $previewQrisStr  = null;
-    public ?int    $previewAmount   = null;
-    public bool    $isSaved         = false;
+    public ?string $previewQrSvg = null;
+
+    public ?string $previewQrisStr = null;
+
+    public ?int $previewAmount = null;
+
+    public bool $isSaved = false;
 
     public function mount(): void
     {
@@ -40,7 +48,7 @@ class QrisGenerator extends Page implements HasForms
         $this->form->fill([
             'merchant_name' => $config?->merchant_name ?? '',
             'static_string' => $config?->static_string ?? '',
-            'test_amount'   => 10000,
+            'test_amount' => 10000,
         ]);
 
         $this->isSaved = QrisConfig::isConfigured();
@@ -99,22 +107,22 @@ class QrisGenerator extends Page implements HasForms
             ->statePath('data');
     }
 
-    protected function getHeaderActions(): array
-    {
-        return [
-            Action::make('save')
-                ->label('💾 Simpan Konfigurasi')
-                ->color('success')
-                ->icon('heroicon-o-check')
-                ->action('save'),
+    // protected function getHeaderActions(): array
+    // {
+    //     return [
+    //         Action::make('save')
+    //             ->label('💾 Simpan Konfigurasi')
+    //             ->color('success')
+    //             ->icon('heroicon-o-check')
+    //             ->action('save'),
 
-            Action::make('preview')
-                ->label('🔍 Preview QR')
-                ->color('info')
-                ->icon('heroicon-o-qr-code')
-                ->action('previewQr'),
-        ];
-    }
+    //         Action::make('preview')
+    //             ->label('🔍 Preview QR')
+    //             ->color('info')
+    //             ->icon('heroicon-o-qr-code')
+    //             ->action('previewQr'),
+    //     ];
+    // }
 
     /** Simpan konfigurasi QRIS ke database. */
     public function save(): void
@@ -129,6 +137,7 @@ class QrisGenerator extends Page implements HasForms
                 ->body('QRIS string terlalu pendek. Pastikan Anda menempelkan string QRIS yang benar.')
                 ->danger()
                 ->send();
+
             return;
         }
 
@@ -139,7 +148,7 @@ class QrisGenerator extends Page implements HasForms
         QrisConfig::create([
             'static_string' => $staticString ?: null,
             'merchant_name' => trim($state['merchant_name'] ?? '') ?: null,
-            'is_active'     => true,
+            'is_active' => true,
         ]);
 
         $this->isSaved = $staticString !== '';
@@ -154,9 +163,9 @@ class QrisGenerator extends Page implements HasForms
     /** Preview QR code berdasarkan static string yang sedang diisi dan nominal test. */
     public function previewQr(): void
     {
-        $state        = $this->form->getState();
+        $state = $this->form->getState();
         $staticString = trim($state['static_string'] ?? '');
-        $amount       = (float) ($state['test_amount'] ?? 10000);
+        $amount = (float) ($state['test_amount'] ?? 10000);
 
         if (strlen($staticString) < 10) {
             // Coba ambil dari DB jika field kosong
@@ -169,6 +178,7 @@ class QrisGenerator extends Page implements HasForms
                 ->body('Masukkan Static QRIS string di form di atas, atau simpan konfigurasi terlebih dahulu.')
                 ->warning()
                 ->send();
+
             return;
         }
 
@@ -176,8 +186,8 @@ class QrisGenerator extends Page implements HasForms
             $qrisService = app(QrisService::class);
 
             $this->previewQrisStr = $qrisService->convertToDynamic($staticString, $amount);
-            $this->previewAmount  = (int) $amount;
-            $this->previewQrSvg   = (string) QrCode::format('svg')
+            $this->previewAmount = (int) $amount;
+            $this->previewQrSvg = (string) QrCode::format('svg')
                 ->size(300)
                 ->errorCorrection('M')
                 ->generate($this->previewQrisStr);
@@ -187,7 +197,7 @@ class QrisGenerator extends Page implements HasForms
                 ->success()
                 ->send();
         } catch (\Throwable $e) {
-            $this->previewQrSvg   = null;
+            $this->previewQrSvg = null;
             $this->previewQrisStr = null;
 
             Notification::make()
@@ -200,8 +210,8 @@ class QrisGenerator extends Page implements HasForms
 
     public function resetPreview(): void
     {
-        $this->previewQrSvg   = null;
+        $this->previewQrSvg = null;
         $this->previewQrisStr = null;
-        $this->previewAmount  = null;
+        $this->previewAmount = null;
     }
 }
