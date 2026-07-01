@@ -15,6 +15,7 @@
 
     const PIN_KEY = 'pos_sb_pinned';
     let pinned = localStorage.getItem(PIN_KEY) === 'true';
+    let sidebarObserver = null;
 
     /** Cek apakah sidebar sedang terbuka (mendukung Alpine store & class fallback) */
     function sidebarIsOpen() {
@@ -166,20 +167,35 @@
 
     /* ─── Mutation Observer & Polling Sync ─────────────────────────────── */
     function startSidebarSync() {
+        if (sidebarObserver) {
+            sidebarObserver.disconnect();
+            sidebarObserver = null;
+        }
+
         const sidebar = document.querySelector('.fi-sidebar');
         if (sidebar) {
-            const observer = new MutationObserver(() => {
+            sidebarObserver = new MutationObserver(() => {
                 syncBodyClass();
                 renderTabButton();
             });
-            observer.observe(sidebar, {
+            sidebarObserver.observe(sidebar, {
                 attributes: true,
                 attributeFilter: ['class', 'style', 'data-open']
             });
         }
+    }
 
-        // Loop polling untuk backup sinkronisasi state
+    // Loop polling untuk backup sinkronisasi state
+    function initPollingSync() {
         setInterval(() => {
+            const sidebar = document.querySelector('.fi-sidebar');
+            if (!sidebar) {
+                const tab = document.getElementById('pos-sidebar-tab');
+                if (tab) tab.remove();
+                document.body.classList.remove('pos-sidebar-open', 'fi-sidebar-open');
+                return;
+            }
+
             syncBodyClass();
             const open = sidebarIsOpen();
             const tab = document.getElementById('pos-sidebar-tab');
@@ -195,10 +211,23 @@
 
     /* ─── Events ─────────────────────────────────────────────────────── */
     function onPageLoad() {
+        const sidebar = document.querySelector('.fi-sidebar');
+        if (!sidebar) {
+            const tab = document.getElementById('pos-sidebar-tab');
+            if (tab) tab.remove();
+            document.body.classList.remove('pos-sidebar-open', 'fi-sidebar-open');
+            if (sidebarObserver) {
+                sidebarObserver.disconnect();
+                sidebarObserver = null;
+            }
+            return;
+        }
+
         initSidebarState();
         renderPinButton();
         renderTabButton();
         syncBodyClass();
+        startSidebarSync();
     }
 
     // Keyboard shortcut '[' to toggle sidebar manually
@@ -222,11 +251,11 @@
     // Run initial setup
     if (document.readyState !== 'loading') {
         onPageLoad();
-        startSidebarSync();
+        initPollingSync();
     } else {
         document.addEventListener('DOMContentLoaded', () => {
             onPageLoad();
-            startSidebarSync();
+            initPollingSync();
         });
     }
 
