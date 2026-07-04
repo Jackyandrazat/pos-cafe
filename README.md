@@ -151,8 +151,9 @@ Proyek ini dilisensikan di bawah **MIT License**. Lihat file `LICENSE` di reposi
 
 ## 📞 Kontak
 
-Jika Anda memiliki pertanyaan, saran, atau menemukan masalah, jangan ragu untuk menghubungi saya di: [jackyandrazat@gmail.com](mailto:jackyandrazat@gmail.com).
+Jika Anda memiliki pertanyaan, saran, atau menemukan masalah, jangan ragu untuk menghubungi saya di:
 
 ---
+
 
 Terima kasih telah menggunakan **POS Cafe System**! 🚀
