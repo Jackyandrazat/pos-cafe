@@ -164,15 +164,16 @@ class OrderResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')
-                ->label('No. Order')
+                ->label(__('No. Order'))
                 ->sortable(),
 
                 Tables\Columns\TextColumn::make('order_type')
-                    ->label('Tipe Order')
+                    ->label(__('Tipe Order'))
+                    ->formatStateUsing(fn (string $state): string => __('orders.types.' . $state))
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('table.table_number')
-                    ->label('Meja')
+                    ->label(__('Meja'))
                     ->sortable()
                     ->visible(fn () => Feature::enabled('table_management')),
                 Tables\Columns\TextColumn::make('customer.name')
@@ -181,7 +182,7 @@ class OrderResource extends Resource
                     ->visible(fn () => Feature::enabled('loyalty')),
 
                 Tables\Columns\TextColumn::make('total_order')
-                    ->label('Total')
+                    ->label(__('Total'))
                     ->money('IDR')
                     ->sortable(),
 
@@ -201,16 +202,17 @@ class OrderResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->visible(fn () => Feature::enabled('gift_cards')),
                 Tables\Columns\BadgeColumn::make('status')
-                    ->label('Status')
+                    ->label(__('Status'))
                     ->colors([
                         'primary' => 'open',
                         'success' => 'completed',
                         'danger' => 'cancelled',
                     ])
+                    ->formatStateUsing(fn (string $state): string => __('orders.status.' . $state))
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Waktu Order')
+                    ->label(__('Waktu Order'))
                     ->dateTime('d/m/Y H:i')
                     ->sortable(),
             ])

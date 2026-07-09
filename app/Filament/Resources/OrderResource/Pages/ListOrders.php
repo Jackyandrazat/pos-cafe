@@ -50,7 +50,7 @@ class ListOrders extends ListRecords
     public function getCardOrdersProperty(): Collection
     {
         $query = (clone $this->getFilteredSortedTableQuery())
-            ->with(['table', 'order_items.product', 'order_items.toppings'])
+            ->with(['table', 'order_items.product', 'order_items.toppings', 'user'])
             ->withCount('order_items');
 
         $search = trim($this->cardSearch);
@@ -80,7 +80,7 @@ class ListOrders extends ListRecords
     public function openOrderDetailModal(int $orderId): void
     {
         $order = (clone $this->getFilteredSortedTableQuery())
-            ->with(['table', 'order_items.product', 'order_items.toppings'])
+            ->with(['table', 'order_items.product', 'order_items.toppings', 'user'])
             ->find($orderId);
 
         if (! $order instanceof Order) {
@@ -96,6 +96,10 @@ class ListOrders extends ListRecords
             'order_type_label' => $this->getOrderTypeLabel($order->order_type),
             'table_number' => optional($order->table)->table_number,
             'total_order' => $order->total_order ?? 0,
+            'subtotal_order' => $order->subtotal_order ?? 0,
+            'discount_order' => $order->discount_order ?? 0,
+            'service_fee_order' => $order->service_fee_order ?? 0,
+            'cashier_name' => optional($order->user)->name ?? __('Sistem'),
             'created_at' => optional($order->created_at)?->timezone(config('app.timezone'))?->translatedFormat('d M Y • H:i'),
         ];
         $this->detailOrderItems = $order->order_items->map(function ($item) {

@@ -29,7 +29,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-            ->brandName('POS By Kodeweb')
+            ->brandName('Laku By Kodeweb')
             ->colors([
                 'primary' => Color::Amber,
             ])

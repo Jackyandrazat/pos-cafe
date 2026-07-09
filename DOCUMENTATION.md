@@ -555,7 +555,7 @@ php artisan key:generate
 
 Edit file `.env` dan sesuaikan:
 ```ini
-APP_NAME="POS Cafe"
+APP_NAME="Laku POS"
 APP_URL=http://localhost:8000
 APP_TIMEZONE=Asia/Jakarta
 APP_LOCALE=id
