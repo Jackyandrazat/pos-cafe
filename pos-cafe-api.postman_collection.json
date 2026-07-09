@@ -1,8 +1,8 @@
 {
     "info": {
-        "name": "POS Cafe API v1",
+        "name": "Laku POS API v1",
         "_postman_id": "5f76f5df-f51d-4bc7-aadd-31d77b7feb4e",
-        "description": "Collection to exercise the POS Cafe public catalogue and authenticated order management APIs.",
+        "description": "Collection to exercise the Laku POS public catalogue and authenticated order management APIs.",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -14,7 +14,10 @@
                     "request": {
                         "method": "POST",
                         "header": [
-                            { "key": "Accept", "value": "application/json" },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
                             {
                                 "key": "Content-Type",
                                 "value": "application/json"
@@ -23,7 +26,11 @@
                         "body": {
                             "mode": "raw",
                             "raw": "{\n    \"name\": \"Walk-in Guest\",\n    \"phone\": \"+62 81234567890\"\n}",
-                            "options": { "raw": { "language": "json" } }
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
                         },
                         "url": "{{base_url}}/auth/guest",
                         "description": "Creates a guest user and returns a Sanctum token. Save the token into the `auth_token` variable for subsequent calls."
@@ -39,7 +46,10 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            { "key": "Accept", "value": "application/json" }
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
                         ],
                         "url": "{{base_url}}/menus?category_id={{category_id}}&search=coffee&is_available=true&per_page=20",
                         "description": "Returns paginated menu items. Optional query params: `category_id`, `search`, `is_available` (true/false), `per_page` (1-50)."
@@ -50,7 +60,10 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            { "key": "Accept", "value": "application/json" }
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
                         ],
                         "url": "{{base_url}}/menus/{{menu_id}}",
                         "description": "Fetches a single menu item by product ID."
@@ -61,7 +74,10 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            { "key": "Accept", "value": "application/json" }
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
                         ],
                         "url": "{{base_url}}/categories",
                         "description": "Returns all menu categories with their menu counts."
@@ -77,7 +93,10 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            { "key": "Accept", "value": "application/json" },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
                             {
                                 "key": "Authorization",
                                 "value": "Bearer {{auth_token}}"
@@ -92,7 +111,10 @@
                     "request": {
                         "method": "POST",
                         "header": [
-                            { "key": "Accept", "value": "application/json" },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
                             {
                                 "key": "Content-Type",
                                 "value": "application/json"
@@ -105,7 +127,11 @@
                         "body": {
                             "mode": "raw",
                             "raw": "{\n    \"order_type\": \"dine_in\",\n    \"table_id\": {{table_id}},\n    \"customer_name\": \"John Doe\",\n    \"notes\": \"Less sugar, please\",\n    \"items\": [\n        {\n            \"menu_id\": {{menu_id}},\n            \"quantity\": 2,\n            \"discount_amount\": 0\n        }\n    ]\n}",
-                            "options": { "raw": { "language": "json" } }
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
                         },
                         "url": "{{base_url}}/orders",
                         "description": "Creates a draft order with one or more items. `order_type` accepts dine_in, take_away, or delivery."
@@ -116,7 +142,10 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            { "key": "Accept", "value": "application/json" },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
                             {
                                 "key": "Authorization",
                                 "value": "Bearer {{auth_token}}"
@@ -131,7 +160,10 @@
                     "request": {
                         "method": "POST",
                         "header": [
-                            { "key": "Accept", "value": "application/json" },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
                             {
                                 "key": "Authorization",
                                 "value": "Bearer {{auth_token}}"
@@ -146,7 +178,10 @@
                     "request": {
                         "method": "POST",
                         "header": [
-                            { "key": "Accept", "value": "application/json" },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
                             {
                                 "key": "Authorization",
                                 "value": "Bearer {{auth_token}}"
@@ -166,7 +201,10 @@
                     "request": {
                         "method": "POST",
                         "header": [
-                            { "key": "Accept", "value": "application/json" },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
                             {
                                 "key": "Content-Type",
                                 "value": "application/json"
@@ -179,7 +217,11 @@
                         "body": {
                             "mode": "raw",
                             "raw": "{\n    \"menu_id\": {{menu_id}},\n    \"quantity\": 1,\n    \"discount_amount\": 0\n}",
-                            "options": { "raw": { "language": "json" } }
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
                         },
                         "url": "{{base_url}}/orders/{{order_id}}/items",
                         "description": "Adds a new item or increases the quantity if the product already exists on the draft order."
@@ -190,7 +232,10 @@
                     "request": {
                         "method": "PATCH",
                         "header": [
-                            { "key": "Accept", "value": "application/json" },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
                             {
                                 "key": "Content-Type",
                                 "value": "application/json"
@@ -203,7 +248,11 @@
                         "body": {
                             "mode": "raw",
                             "raw": "{\n    \"quantity\": 2,\n    \"discount_amount\": 5000\n}",
-                            "options": { "raw": { "language": "json" } }
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
                         },
                         "url": "{{base_url}}/orders/{{order_id}}/items/{{order_item_id}}",
                         "description": "Replaces the quantity/discount of an existing order item."
@@ -214,7 +263,10 @@
                     "request": {
                         "method": "DELETE",
                         "header": [
-                            { "key": "Accept", "value": "application/json" },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
                             {
                                 "key": "Authorization",
                                 "value": "Bearer {{auth_token}}"
@@ -234,7 +286,10 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            { "key": "Accept", "value": "application/json" },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
                             {
                                 "key": "Authorization",
                                 "value": "Bearer {{auth_token}}"
@@ -254,7 +309,10 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            { "key": "Accept", "value": "application/json" },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
                             {
                                 "key": "Authorization",
                                 "value": "Bearer {{auth_token}}"
@@ -269,7 +327,10 @@
                     "request": {
                         "method": "POST",
                         "header": [
-                            { "key": "Accept", "value": "application/json" },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
                             {
                                 "key": "Content-Type",
                                 "value": "application/json"
@@ -282,7 +343,11 @@
                         "body": {
                             "mode": "raw",
                             "raw": "{\n    \"payment_method\": \"cash\",\n    \"amount\": 100000\n}",
-                            "options": { "raw": { "language": "json" } }
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
                         },
                         "url": "{{base_url}}/orders/{{order_id}}/payments",
                         "description": "Records a payment. Methods: cash, qris, transfer, ewallet."
@@ -293,7 +358,10 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            { "key": "Accept", "value": "application/json" },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
                             {
                                 "key": "Authorization",
                                 "value": "Bearer {{auth_token}}"
@@ -307,13 +375,37 @@
         }
     ],
     "variable": [
-        { "key": "base_url", "value": "http://localhost:8000/api/v1" },
-        { "key": "auth_token", "value": "" },
-        { "key": "menu_id", "value": "1" },
-        { "key": "category_id", "value": "1" },
-        { "key": "order_id", "value": "1" },
-        { "key": "order_item_id", "value": "1" },
-        { "key": "payment_id", "value": "1" },
-        { "key": "table_id", "value": "1" }
+        {
+            "key": "base_url",
+            "value": "http://localhost:8000/api/v1"
+        },
+        {
+            "key": "auth_token",
+            "value": ""
+        },
+        {
+            "key": "menu_id",
+            "value": "1"
+        },
+        {
+            "key": "category_id",
+            "value": "1"
+        },
+        {
+            "key": "order_id",
+            "value": "1"
+        },
+        {
+            "key": "order_item_id",
+            "value": "1"
+        },
+        {
+            "key": "payment_id",
+            "value": "1"
+        },
+        {
+            "key": "table_id",
+            "value": "1"
+        }
     ]
 }

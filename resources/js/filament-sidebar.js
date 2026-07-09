@@ -1,5 +1,5 @@
 /**
- * POS Cafe — Filament Sidebar Smart Manager
+ * Laku POS — Filament Sidebar Smart Manager
  *
  * Fitur:
  *  1. Auto-close saat navigasi (Livewire navigated) jika unpinned.
@@ -44,6 +44,7 @@
             }
         }
         syncBodyClass();
+        renderTabButton();
     }
 
     /** Tunggu Alpine store siap lalu terapkan state */
@@ -103,6 +104,13 @@
                 syncBodyClass();
             });
             document.body.appendChild(tab);
+        }
+
+        if (pinned) {
+            tab.style.display = 'none';
+            return;
+        } else {
+            tab.style.display = '';
         }
 
         const open = sidebarIsOpen();

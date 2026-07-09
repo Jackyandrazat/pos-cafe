@@ -1,4 +1,4 @@
-# POS Cafe – UAT Checklist
+# Laku POS – UAT Checklist
 
 ## Scope & Preconditions
 - Environment mirrored to staging with latest migrations (`php artisan migrate --seed` if needed).

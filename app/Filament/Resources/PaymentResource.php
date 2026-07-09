@@ -128,12 +128,12 @@ class PaymentResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('order.id')
-                    ->label('Order #')
+                    ->label(__('Order #'))
                     ->sortable()
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('payment_method')
-                    ->label('Metode')
+                    ->label(__('Metode'))
                     ->formatStateUsing(fn ($state) => match ($state) {
                         'cash'     => '💵 Cash',
                         'qris'     => '📱 QRIS',
@@ -144,13 +144,13 @@ class PaymentResource extends Resource
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('payment_channel')
-                    ->label('Channel')
+                    ->label(__('Channel'))
                     ->formatStateUsing(fn ($state) => $state ? strtoupper($state) : '-')
                     ->sortable()
                     ->toggleable(),
 
                 Tables\Columns\BadgeColumn::make('status')
-                    ->label('Status')
+                    ->label(__('Status'))
                     ->colors([
                         'warning' => PaymentStatus::Pending->value,
                         'success' => PaymentStatus::Captured->value,
@@ -161,12 +161,12 @@ class PaymentResource extends Resource
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('amount_paid')
-                    ->label('Jumlah')
+                    ->label(__('Jumlah'))
                     ->money('IDR')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('change_return')
-                    ->label('Kembalian')
+                    ->label(__('Kembalian'))
                     ->money('IDR')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
