@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Enums\OrderStatus;
-use App\Support\Feature;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -18,6 +17,7 @@ class Order extends Model
         'order_type',
         'customer_name',
         'status',
+        'stock_deducted',
         'subtotal_order',
         'discount_order',
         'promotion_id',
@@ -29,39 +29,23 @@ class Order extends Model
         'service_fee_order',
         'total_order',
         'notes',
+        'idempotency_key',
     ];
 
     protected $casts = [
-        'subtotal_order' => 'float',
-        'discount_order' => 'float',
+        'subtotal_order'     => 'float',
+        'discount_order'     => 'float',
         'promotion_discount' => 'float',
-        'gift_card_amount' => 'float',
-        'service_fee_order' => 'float',
-        'total_order' => 'float',
+        'gift_card_amount'   => 'float',
+        'service_fee_order'  => 'float',
+        'total_order'        => 'float',
+        'stock_deducted'     => 'boolean',
     ];
 
-    protected static function booted(): void
-    {
-        if (! Feature::enabled('table_management')) {
-            return;
-        }
-
-        static::created(function (self $order) {
-            if ($order->order_type === 'dine_in' && $order->table_id) {
-                CafeTable::whereKey($order->table_id)->update(['status' => 'occupied']);
-            }
-        });
-
-        static::updated(function (self $order) {
-            if ($order->order_type === 'dine_in' && $order->wasChanged('status') && $order->table_id) {
-                match ($order->status) {
-                    'completed' => CafeTable::whereKey($order->table_id)->update(['status' => 'cleaning']),
-                    'cancelled' => CafeTable::whereKey($order->table_id)->update(['status' => 'available']),
-                    default => null,
-                };
-            }
-        });
-    }
+    // -------------------------------------------------------------------------
+    // Catatan: Semua event handler (created/updated) telah dipindahkan ke
+    // OrderObserver untuk konsolidasi. Lihat: app/Observers/OrderObserver.php
+    // -------------------------------------------------------------------------
 
     // Relasi ke meja
     public function table()
@@ -76,6 +60,11 @@ class Order extends Model
     }
 
     public function items()
+    {
+        return $this->order_items();
+    }
+
+    public function orderItems()
     {
         return $this->order_items();
     }
@@ -119,12 +108,18 @@ class Order extends Model
         ]);
     }
 
+    /**
+     * Hitung ulang subtotal dan grand total order.
+     *
+     * Formula: grandTotal = subtotal - discount - promoDiscount - giftCardAmount + serviceFee
+     */
     public function recalculateTotals(): void
     {
-        $subtotal = $this->items()->sum('subtotal');
-        $discount = (float) ($this->getAttribute('discount_order') ?? $this->getAttribute('discount_amount') ?? 0);
-        $promoDiscount = (float) ($this->getAttribute('promotion_discount') ?? 0);
-        $serviceFee = (float) ($this->getAttribute('service_fee_order') ?? 0);
+        $subtotal       = $this->items()->sum('subtotal');
+        $discount       = (float) ($this->getAttribute('discount_order') ?? $this->getAttribute('discount_amount') ?? 0);
+        $promoDiscount  = (float) ($this->getAttribute('promotion_discount') ?? 0);
+        $giftCardAmount = (float) ($this->getAttribute('gift_card_amount') ?? 0);
+        $serviceFee     = (float) ($this->getAttribute('service_fee_order') ?? 0);
 
         if (array_key_exists('subtotal_order', $this->attributes)) {
             $this->setAttribute('subtotal_order', $subtotal);
@@ -132,7 +127,7 @@ class Order extends Model
             $this->setAttribute('subtotal', $subtotal);
         }
 
-        $grandTotal = max($subtotal - $discount - $promoDiscount + $serviceFee, 0);
+        $grandTotal = max($subtotal - $discount - $promoDiscount - $giftCardAmount + $serviceFee, 0);
 
         if (array_key_exists('total_order', $this->attributes)) {
             $this->setAttribute('total_order', $grandTotal);

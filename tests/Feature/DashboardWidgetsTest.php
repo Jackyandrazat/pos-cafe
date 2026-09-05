@@ -127,6 +127,19 @@ class DashboardWidgetsTest extends TestCase
         Carbon::setTestNow();
     }
 
+    public function test_daily_top_orders_chart_widget_renders_successfully_via_livewire(): void
+    {
+        $admin = User::factory()->create();
+        $adminRole = Role::create(['name' => 'admin']);
+        $admin->roles()->attach($adminRole->id);
+
+        \Filament\Facades\Filament::setCurrentPanel(\Filament\Facades\Filament::getPanel('admin'));
+        $this->actingAs($admin);
+
+        \Livewire\Livewire::test(DailyTopOrdersChartWidget::class)
+            ->assertSuccessful();
+    }
+
     private function createOrderWithPayment(User $user, float $amount): Order
     {
         $category = Category::create([

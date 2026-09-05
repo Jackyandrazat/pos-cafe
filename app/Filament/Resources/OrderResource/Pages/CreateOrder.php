@@ -102,11 +102,6 @@ class CreateOrder extends CreateRecord
             PromotionService::syncUsage($this->record);
         }
 
-        if (Feature::enabled('loyalty')) {
-            $this->record->load('customer');
-            app(LoyaltyService::class)->rewardOrderPoints($this->record);
-        }
-
         if (Feature::enabled('gift_cards') && $this->pendingGiftCardRedemption) {
             /** @var GiftCardService $giftCardService */
             $giftCardService = app(GiftCardService::class);

@@ -25,13 +25,15 @@ class Payment extends Model
         'shift_id',
         'confirmed_by',
         'confirmed_at',
+        'processed_webhook_at',
     ];
 
     protected $casts = [
-        'meta'         => 'array',
-        'payment_date' => 'datetime',
-        'paid_at'      => 'datetime',
-        'confirmed_at' => 'datetime',
+        'meta'                 => 'array',
+        'payment_date'         => 'datetime',
+        'paid_at'              => 'datetime',
+        'confirmed_at'         => 'datetime',
+        'processed_webhook_at' => 'datetime',
     ];
 
     // -------------------------------------------------------------------------

@@ -10,9 +10,11 @@ use App\Http\Resources\Api\V1\OrderItemResource;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\Topping;
 use App\Services\ShiftGuard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 
 class OrderItemController extends Controller
@@ -22,38 +24,99 @@ class OrderItemController extends Controller
         $this->ensureEditable($request->user(), $order);
         $data = $request->validated();
 
-        $product = Product::query()
-            ->whereKey($data['menu_id'])
-            ->where('status_enabled', true)
-            ->first();
+        return DB::transaction(function () use ($data, $order) {
+            $product = Product::query()
+                ->whereKey($data['menu_id'])
+                ->where('status_enabled', true)
+                ->first();
 
-        if (! $product) {
-            abort(Response::HTTP_UNPROCESSABLE_ENTITY, 'Menu item is unavailable.');
-        }
-        $item = $order->items()->where('product_id', $product->id)->first();
-        $discount = min($data['discount_amount'] ?? 0, $product->price);
-        $effectivePrice = max($product->price - $discount, 0);
+            if (! $product) {
+                abort(Response::HTTP_UNPROCESSABLE_ENTITY, 'Menu item is unavailable.');
+            }
 
-        if ($item) {
-            $item->qty += $data['quantity'];
-            $item->discount_amount = $discount;
-            $item->subtotal = $effectivePrice * $item->qty;
-            $item->save();
-        } else {
-            $item = $order->items()->create([
-                'product_id' => $product->id,
-                'qty' => $data['quantity'],
-                'price' => $product->price,
-                'discount_amount' => $discount,
-                'subtotal' => $effectivePrice * $data['quantity'],
-            ]);
-        }
+            // ==========================
+            // HANDLE SIZE
+            // ==========================
+            $sizeId = $data['size_id'] ?? null;
+            $size = null;
+            $priceModifier = 0;
 
-        $order->recalculateTotals();
+            if ($sizeId) {
+                $size = $product->sizes()->where('id', $sizeId)->first();
 
-        return response()->json([
-            'data' => new OrderItemResource($item->load('product')),
-        ], Response::HTTP_CREATED);
+                if (! $size) {
+                    abort(Response::HTTP_UNPROCESSABLE_ENTITY, 'Invalid size selected.');
+                }
+
+                $priceModifier = $size->price_modifier;
+            }
+
+            $basePrice = $product->price + $priceModifier;
+            $discount = min($data['discount_amount'] ?? 0, $basePrice);
+            $effectivePrice = max($basePrice - $discount, 0);
+
+            // Merge berdasarkan (product_id, size_id) — bukan product_id saja
+            $item = $order->items()
+                ->where('product_id', $product->id)
+                ->where('size_id', $size?->id)
+                ->first();
+
+            if ($item) {
+                $item->qty += $data['quantity'];
+                $item->discount_amount = $discount;
+                $item->price = $basePrice;
+                $item->subtotal = $effectivePrice * $item->qty;
+                $item->save();
+            } else {
+                $item = $order->items()->create([
+                    'product_id' => $product->id,
+                    'size_id' => $size?->id,
+                    'qty' => $data['quantity'],
+                    'price' => $basePrice,
+                    'discount_amount' => $discount,
+                    'subtotal' => $effectivePrice * $data['quantity'],
+                ]);
+            }
+
+            // ==========================
+            // HANDLE TOPPINGS
+            // ==========================
+            $toppingsSubtotal = 0;
+            foreach ($data['toppings'] ?? [] as $toppingData) {
+                $toppingModel = Topping::whereKey($toppingData['topping_id'])
+                    ->where('is_active', true)
+                    ->first();
+
+                if (! $toppingModel) {
+                    abort(422, 'Invalid topping selected.');
+                }
+
+                $toppingQty = $toppingData['quantity'] ?? 1;
+                $toppingTotal = $toppingModel->price * $toppingQty;
+                $toppingsSubtotal += $toppingTotal;
+
+                $item->toppings()->create([
+                    'topping_id' => $toppingModel->id,
+                    'name' => $toppingData['name'] ?? $toppingModel->name,
+                    'quantity' => $toppingQty,
+                    'price' => $toppingModel->price,
+                    'total' => $toppingTotal,
+                ]);
+            }
+
+            // Recalculate subtotal item jika ada topping baru
+            if ($toppingsSubtotal > 0) {
+                $currentToppingsTotal = $item->toppings()->sum('total');
+                $item->subtotal = ($effectivePrice * $item->qty) + $currentToppingsTotal;
+                $item->save();
+            }
+
+            $order->recalculateTotals();
+
+            return response()->json([
+                'data' => new OrderItemResource($item->load(['product', 'toppings'])),
+            ], Response::HTTP_CREATED);
+        });
     }
 
     public function update(UpdateOrderItemRequest $request, Order $order, OrderItem $orderItem): OrderItemResource
@@ -64,17 +127,22 @@ class OrderItemController extends Controller
             abort(Response::HTTP_NOT_FOUND);
         }
 
-        $data = $request->validated();
-        $discount = min($data['discount_amount'] ?? $orderItem->discount_amount, $orderItem->price);
-        $effectivePrice = max($orderItem->price - $discount, 0);
-        $orderItem->qty = $data['quantity'];
-        $orderItem->discount_amount = $discount;
-        $orderItem->subtotal = $effectivePrice * $orderItem->qty;
-        $orderItem->save();
+        return DB::transaction(function () use ($request, $order, $orderItem) {
+            $data = $request->validated();
+            $discount = min($data['discount_amount'] ?? $orderItem->discount_amount, $orderItem->price);
+            $effectivePrice = max($orderItem->price - $discount, 0);
+            $orderItem->qty = $data['quantity'];
+            $orderItem->discount_amount = $discount;
 
-        $order->recalculateTotals();
+            // Hitung ulang subtotal termasuk topping yang sudah ada
+            $toppingsTotal = $orderItem->toppings()->sum('total');
+            $orderItem->subtotal = ($effectivePrice * $orderItem->qty) + $toppingsTotal;
+            $orderItem->save();
 
-        return new OrderItemResource($orderItem->load('product'));
+            $order->recalculateTotals();
+
+            return new OrderItemResource($orderItem->load(['product', 'toppings']));
+        });
     }
 
     public function destroy(Request $request, Order $order, OrderItem $orderItem): JsonResponse
@@ -85,10 +153,13 @@ class OrderItemController extends Controller
             abort(Response::HTTP_NOT_FOUND);
         }
 
-        $orderItem->delete();
-        $order->recalculateTotals();
+        return DB::transaction(function () use ($order, $orderItem) {
+            $orderItem->toppings()->delete();
+            $orderItem->delete();
+            $order->recalculateTotals();
 
-        return response()->json(data: null, status: Response::HTTP_NO_CONTENT);
+            return response()->json(data: null, status: Response::HTTP_NO_CONTENT);
+        });
     }
 
     protected function ensureEditable($user, Order $order): void

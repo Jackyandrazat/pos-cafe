@@ -22,7 +22,7 @@ class CreateFullTablesForPosCafe extends Migration
             $table->id();
             $table->foreignId('area_id')->constrained('areas');
             $table->string('table_number', 50);
-            $table->enum('status', ['available', 'occupied', 'reserved'])->default('available');
+            $table->enum('status', ['available', 'occupied', 'reserved', 'cleaning'])->default('available');
             $table->timestamps();
         });
 

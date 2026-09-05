@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
+use App\Exceptions\StockValidationException;
+use App\Services\StockService;
+use App\Services\StockValidationService;
+
 class EditOrder extends EditRecord
 {
     protected static string $resource = OrderResource::class;
@@ -32,34 +36,67 @@ class EditOrder extends EditRecord
         // Ambil data order items dari session
         $items = session('selected_order_items', []);
 
-        // Bisa gunakan transaction untuk aman
-        DB::transaction(function () use ($order, $items) {
-            // Hapus dulu item order lama (opsional, tergantung logika update)
-            $order->order_items()->delete();
-
-            // Simpan ulang item yang baru
-            foreach ($items as $item) {
-                $orderItem = $order->order_items()->create([
-                    'product_id' => $item['product_id'],
-                    'qty' => $item['qty'],
-                    'price' => $item['price'],
-                    'discount_amount' => $item['discount'] ?? 0,
-                    'subtotal' => $item['subtotal'],
-                ]);
-
-                foreach ($item['toppings'] ?? [] as $topping) {
-                    $quantity = $topping['quantity'] ?? $item['qty'] ?? 1;
-                    $price = $topping['price'] ?? 0;
-                    $orderItem->toppings()->create([
-                        'topping_id' => $topping['id'] ?? null,
-                        'name' => $topping['name'] ?? 'Topping',
-                        'price' => $price,
-                        'quantity' => $quantity,
-                        'total' => $topping['total'] ?? ($price * $quantity),
-                    ]);
+        if (! empty($items)) {
+            DB::transaction(function () use ($order, $items) {
+                // Jika stok sudah pernah dipotong pada order ini, restore dulu
+                $wasStockDeducted = (bool) $order->stock_deducted;
+                if ($wasStockDeducted) {
+                    $order->load(['items.product.ingredients.ingredient', 'items.toppings.topping.ingredients.ingredient']);
+                    StockService::restoreIngredientsFromOrder($order);
                 }
-            }
-        });
+
+                // Hapus item order lama beserta topping-nya
+                foreach ($order->order_items as $oldItem) {
+                    $oldItem->toppings()->delete();
+                    $oldItem->delete();
+                }
+
+                // Simpan ulang item yang baru
+                foreach ($items as $item) {
+                    $orderItem = $order->order_items()->create([
+                        'product_id' => $item['product_id'],
+                        'qty' => $item['qty'],
+                        'price' => $item['price'],
+                        'discount_amount' => $item['discount'] ?? 0,
+                        'subtotal' => $item['subtotal'],
+                    ]);
+
+                    foreach ($item['toppings'] ?? [] as $topping) {
+                        $quantity = $topping['quantity'] ?? $item['qty'] ?? 1;
+                        $price = $topping['price'] ?? 0;
+                        $orderItem->toppings()->create([
+                            'topping_id' => $topping['id'] ?? null,
+                            'name' => $topping['name'] ?? 'Topping',
+                            'price' => $price,
+                            'quantity' => $quantity,
+                            'total' => $topping['total'] ?? ($price * $quantity),
+                        ]);
+                    }
+                }
+
+                // Jika sebelumnya stok sudah dipotong, validasi dan potong kembali untuk item baru
+                if ($wasStockDeducted) {
+                    $order->unsetRelation('items');
+                    $order->unsetRelation('order_items');
+                    $order->load(['items.product.ingredients.ingredient', 'items.toppings.topping.ingredients.ingredient']);
+
+                    try {
+                        StockValidationService::validateStockForOrder($order);
+                        StockService::decrementIngredientsForOrder($order);
+                    } catch (StockValidationException $e) {
+                        Notification::make()
+                            ->title('Gagal Rekonsiliasi Stok')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->send();
+
+                        throw ValidationException::withMessages([
+                            'stock' => $e->getMessage(),
+                        ]);
+                    }
+                }
+            });
+        }
 
         if ($this->record->table_id) {
             $this->record->table?->update([

@@ -44,6 +44,34 @@ class Product extends Model implements HasMedia
     {
         return $this->hasMany(ProductSize::class);
     }
+
+    public function hasSufficientStock(int $qty = 1): bool
+    {
+        if (! $this->status_enabled) {
+            return false;
+        }
+
+        $productIngredients = $this->relationLoaded('ingredients')
+            ? $this->ingredients
+            : $this->ingredients()->with('ingredient')->get();
+
+        if ($productIngredients->isNotEmpty()) {
+            foreach ($productIngredients as $pi) {
+                $ingredient = $pi->relationLoaded('ingredient') ? $pi->ingredient : $pi->ingredient()->first();
+                if (! $ingredient) {
+                    continue;
+                }
+                $needed = (float) $pi->quantity_used * $qty;
+                if ((float) $ingredient->stock_qty < $needed) {
+                    return false;
+                }
+            }
+        } elseif ($this->stock_qty !== null && (int) $this->stock_qty < $qty) {
+            return false;
+        }
+
+        return true;
+    }
      public function registerMediaCollections(): void
     {
         $this

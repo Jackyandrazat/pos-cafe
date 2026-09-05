@@ -80,7 +80,8 @@ class GiftCardService
                 throw new GiftCardException('Fitur gift card sedang dinonaktifkan.');
             }
 
-            $giftCard->refresh();
+            // Gunakan lockForUpdate untuk mencegah race condition saldo
+            $giftCard = GiftCard::where('id', $giftCard->id)->lockForUpdate()->first();
 
             if (! $giftCard->isRedeemable()) {
                 throw new GiftCardException('Gift card tidak lagi dapat digunakan.');

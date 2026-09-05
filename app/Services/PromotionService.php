@@ -24,7 +24,7 @@ class PromotionService
     /**
      * @return array{promotion: Promotion, discount: float, code: string}|null
      */
-    public static function validateAndCalculate(?string $code, float $subtotal, ?User $user, ?int $ignoreOrderId = null): ?array
+    public static function validateAndCalculate(?string $code, float $subtotal, ?User $user = null, ?int $ignoreOrderId = null): ?array
     {
         $normalizedCode = self::normalizeCode($code);
 
@@ -39,6 +39,7 @@ class PromotionService
         /** @var Promotion|null $promotion */
         $promotion = Promotion::query()
             ->whereRaw('upper(code) = ?', [$normalizedCode])
+            ->lockForUpdate()
             ->first();
 
 

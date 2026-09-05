@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Enums\OrderStatus;
 use App\Models\Order;
+use App\Services\StockService;
 use App\Support\Feature;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -23,6 +24,19 @@ class KitchenDisplay extends Page
     public string $statusFilter = 'active';
 
     protected $listeners = ['refreshOrders' => 'refreshOrders'];
+
+    /**
+     * Peta transisi status yang diizinkan dari Kitchen Display.
+     * Key = status saat ini, Value = status yang diperbolehkan.
+     */
+    private const ALLOWED_TRANSITIONS = [
+        'draft'     => ['confirmed', 'preparing', 'cancelled'],
+        'pending'   => ['confirmed', 'preparing', 'cancelled'],
+        'payment'   => ['confirmed', 'preparing', 'cancelled'],
+        'confirmed' => ['preparing', 'cancelled'],
+        'preparing' => ['ready', 'cancelled'],
+        'ready'     => ['completed', 'cancelled'],
+    ];
 
     public function mount(): void
     {
@@ -78,6 +92,34 @@ class KitchenDisplay extends Page
 
         if ($order->status === $status) {
             return;
+        }
+
+        // Validasi bahwa status target adalah OrderStatus yang valid
+        $validStatus = OrderStatus::tryFrom($status);
+        if (! $validStatus) {
+            Notification::make()
+                ->title("Status '{$status}' tidak valid.")
+                ->danger()
+                ->send();
+            return;
+        }
+
+        // Validasi bahwa transisi ini diizinkan
+        $currentStatus = (string) $order->status;
+        $allowedTargets = self::ALLOWED_TRANSITIONS[$currentStatus] ?? [];
+
+        if (! in_array($status, $allowedTargets, true)) {
+            Notification::make()
+                ->title("Transisi dari '{$currentStatus}' ke '{$status}' tidak diizinkan.")
+                ->danger()
+                ->send();
+            return;
+        }
+
+        // Jika transisi ke cancelled, kembalikan stok jika sudah dikurangi
+        if ($status === OrderStatus::Cancelled->value && $order->stock_deducted) {
+            StockService::restoreIngredientsFromOrder($order);
+            $order->stock_deducted = false;
         }
 
         $order->status = $status;
