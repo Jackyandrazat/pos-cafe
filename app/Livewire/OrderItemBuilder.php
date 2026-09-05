@@ -218,16 +218,23 @@ class OrderItemBuilder extends Component
 
     public function selectModalSize(?int $sizeId): void
     {
-        $this->modalSelectedSizeId = $sizeId;
+        $this->modalSelectedSizeId = $sizeId !== null ? (int) $sizeId : null;
         $this->recalculateModalSubtotal();
     }
 
     public function toggleModalTopping(int $toppingId): void
     {
-        if (in_array($toppingId, $this->modalSelectedToppingIds, true)) {
-            $this->modalSelectedToppingIds = array_values(array_diff($this->modalSelectedToppingIds, [$toppingId]));
+        $toppingId = (int) $toppingId;
+        $currentIds = array_map('intval', $this->modalSelectedToppingIds);
+
+        if (in_array($toppingId, $currentIds, true)) {
+            $this->modalSelectedToppingIds = array_values(array_filter(
+                $currentIds,
+                fn ($id) => $id !== $toppingId
+            ));
         } else {
-            $this->modalSelectedToppingIds[] = $toppingId;
+            $currentIds[] = $toppingId;
+            $this->modalSelectedToppingIds = array_values($currentIds);
         }
 
         $this->recalculateModalSubtotal();

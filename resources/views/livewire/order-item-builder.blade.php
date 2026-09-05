@@ -347,22 +347,22 @@
         <div class="pos-modal-overlay" wire:click.self="closeCustomModal">
             <div class="pos-modal-card" onclick="event.stopPropagation()">
                 {{-- Header Modal --}}
-                <div class="p-4 sm:p-5 bg-gray-50 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between gap-4">
+                <div class="pos-modal-header">
                     <div class="flex items-center gap-3.5 min-w-0">
                         @if ($modalProductImage)
-                            <img src="{{ $modalProductImage }}" class="w-12 h-12 flex-shrink-0 object-cover rounded-xl shadow-xs border border-gray-200 dark:border-gray-700" alt="{{ $modalProductName }}">
+                            <img src="{{ $modalProductImage }}" class="w-14 h-14 flex-shrink-0 object-cover rounded-xl shadow-sm border border-gray-200 dark:border-gray-700" alt="{{ $modalProductName }}">
                         @else
-                            <div class="w-12 h-12 flex-shrink-0 rounded-xl bg-gradient-to-br from-primary-500 to-amber-500 text-white flex items-center justify-center font-black text-lg shadow-sm">
+                            <div class="w-14 h-14 flex-shrink-0 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center font-black text-xl shadow-md">
                                 {{ substr($modalProductName, 0, 2) }}
                             </div>
                         @endif
                         <div class="min-w-0">
-                            <h3 class="text-base font-black text-gray-900 dark:text-white leading-tight truncate">
+                            <h3 class="text-lg font-black text-gray-900 dark:text-white leading-tight truncate">
                                 {{ $modalProductName }}
                             </h3>
-                            <div class="flex items-center gap-2 mt-1">
-                                <span class="text-xs font-bold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/60 px-2 py-0.5 rounded-md border border-primary-200/60 dark:border-primary-800/60">
-                                    Dasar: Rp{{ number_format($modalProductPrice, 0, ',', '.') }}
+                            <div class="flex items-center gap-2 mt-1.5">
+                                <span class="text-xs font-extrabold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/70 px-2.5 py-0.5 rounded-full border border-orange-200 dark:border-orange-900">
+                                    Harga Dasar: Rp{{ number_format($modalProductPrice, 0, ',', '.') }}
                                 </span>
                             </div>
                         </div>
@@ -371,49 +371,49 @@
                     <button
                         type="button"
                         wire:click="closeCustomModal"
-                        class="flex-shrink-0 w-8 h-8 rounded-full bg-gray-200/80 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 flex items-center justify-center transition"
-                        title="Tutup Modal"
+                        class="pos-modal-close-btn"
+                        title="Tutup Modal (Esc)"
                     >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
                 </div>
 
-                {{-- Body Modal (Scrollable) --}}
-                <div class="p-5 space-y-5 overflow-y-auto max-h-[60vh] scrollbar-thin">
+                {{-- Body Modal (Scrollable dengan spacing yang lega) --}}
+                <div class="pos-modal-body">
                     {{-- 1. Pilihan Ukuran / Size (jika ada) --}}
                     @if (! empty($modalAvailableSizes))
-                        <div class="space-y-2.5">
+                        <div class="space-y-3">
                             <div class="flex items-center justify-between">
-                                <label class="text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wider flex items-center gap-1.5">
-                                    <span class="w-1.5 h-3.5 bg-primary-600 rounded-full inline-block"></span>
+                                <label class="text-xs font-black text-gray-800 dark:text-gray-200 uppercase tracking-wider flex items-center gap-2">
+                                    <span class="w-2 h-4 bg-orange-500 rounded-full inline-block"></span>
                                     Pilih Ukuran (Size)
                                 </label>
-                                <span class="text-[11px] font-semibold text-primary-600 dark:text-primary-400">Pilih 1</span>
+                                <span class="text-[11px] font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/60 px-2 py-0.5 rounded">Pilih 1 Ukuran</span>
                             </div>
 
-                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                 @foreach ($modalAvailableSizes as $size)
                                     @php
-                                        $isSelected = $modalSelectedSizeId === $size['id'];
+                                        $isSelected = (int) $modalSelectedSizeId === (int) $size['id'];
                                     @endphp
                                     <button
                                         type="button"
                                         wire:click="selectModalSize({{ $size['id'] }})"
-                                        @class([
-                                            'p-3 rounded-xl border text-left transition flex flex-col justify-between gap-1.5 cursor-pointer relative',
-                                            'bg-primary-50 dark:bg-primary-950/50 border-primary-600 text-primary-900 dark:text-primary-100 ring-2 ring-primary-500/20 shadow-sm' => $isSelected,
-                                            'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-750' => ! $isSelected,
-                                        ])
+                                        class="pos-choice-card {{ $isSelected ? 'is-selected' : '' }}"
                                     >
                                         <div class="flex items-center justify-between w-full">
-                                            <span class="text-xs font-bold">{{ $size['name'] }}</span>
-                                            @if ($isSelected)
-                                                <span class="w-4 h-4 rounded-full bg-primary-600 text-white flex items-center justify-center text-[10px]">✓</span>
-                                            @endif
+                                            <span class="text-sm font-bold text-gray-900 dark:text-white">{{ $size['name'] }}</span>
+                                            <div class="pos-check-circle {{ $isSelected ? 'checked' : '' }}">
+                                                @if ($isSelected)
+                                                    <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                @endif
+                                            </div>
                                         </div>
-                                        <span class="text-xs {{ $size['price_modifier'] > 0 ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-gray-400' }}">
+                                        <span class="text-xs font-semibold {{ $size['price_modifier'] > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400' }}">
                                             {{ $size['price_modifier'] > 0 ? '+Rp' . number_format($size['price_modifier'], 0, ',', '.') : 'Normal' }}
                                         </span>
                                     </button>
@@ -424,44 +424,36 @@
 
                     {{-- 2. Pilihan Topping (jika ada) --}}
                     @if (! empty($modalAvailableToppings))
-                        <div class="space-y-2.5">
+                        <div class="space-y-3">
                             <div class="flex items-center justify-between">
-                                <label class="text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wider flex items-center gap-1.5">
-                                    <span class="w-1.5 h-3.5 bg-amber-500 rounded-full inline-block"></span>
+                                <label class="text-xs font-black text-gray-800 dark:text-gray-200 uppercase tracking-wider flex items-center gap-2">
+                                    <span class="w-2 h-4 bg-amber-500 rounded-full inline-block"></span>
                                     Pilih Topping Tambahan
                                 </label>
-                                <span class="text-[11px] text-gray-400">Opsional (Bisa lebih dari 1)</span>
+                                <span class="text-[11px] font-medium text-gray-500 dark:text-gray-400">Opsional (Bisa lebih dari 1)</span>
                             </div>
 
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 @foreach ($modalAvailableToppings as $top)
                                     @php
-                                        $isTopSelected = in_array($top['id'], $modalSelectedToppingIds, true);
+                                        $isTopSelected = in_array((int) $top['id'], array_map('intval', $modalSelectedToppingIds), true);
                                     @endphp
                                     <button
                                         type="button"
                                         wire:click="toggleModalTopping({{ $top['id'] }})"
-                                        @class([
-                                            'p-2.5 rounded-xl border text-left transition flex items-center justify-between gap-2.5 cursor-pointer',
-                                            'bg-amber-50 dark:bg-amber-950/40 border-amber-500 text-amber-950 dark:text-amber-100 ring-1 ring-amber-500/30' => $isTopSelected,
-                                            'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600' => ! $isTopSelected,
-                                        ])
+                                        class="pos-topping-card {{ $isTopSelected ? 'is-selected' : '' }}"
                                     >
-                                        <div class="flex items-center gap-2.5 min-w-0">
-                                            <div @class([
-                                                'w-5 h-5 rounded-md flex items-center justify-center border transition flex-shrink-0',
-                                                'bg-amber-500 border-amber-500 text-white font-black text-xs' => $isTopSelected,
-                                                'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700' => ! $isTopSelected,
-                                            ])>
+                                        <div class="flex items-center gap-3 min-w-0">
+                                            <div class="pos-check-box {{ $isTopSelected ? 'checked' : '' }}">
                                                 @if ($isTopSelected)
-                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                                                    <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5" d="M5 13l4 4L19 7" />
                                                     </svg>
                                                 @endif
                                             </div>
-                                            <span class="text-xs font-semibold truncate">{{ $top['name'] }}</span>
+                                            <span class="text-sm font-bold text-gray-900 dark:text-white truncate text-left">{{ $top['name'] }}</span>
                                         </div>
-                                        <span class="text-xs font-bold text-gray-900 dark:text-white flex-shrink-0">
+                                        <span class="pos-topping-price">
                                             +Rp{{ number_format($top['price'], 0, ',', '.') }}
                                         </span>
                                     </button>
@@ -470,27 +462,29 @@
                         </div>
                     @endif
 
-                    {{-- 3. Kuantitas & Diskon Item --}}
-                    <div class="grid grid-cols-2 gap-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+                    {{-- 3. Kuantitas & Diskon Item (Side-by-Side dengan Spacing Nyaman) --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700/80">
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">
-                                Kuantitas (Qty)
+                            <label class="block text-xs font-black text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
+                                Jumlah (Qty)
                             </label>
-                            <div class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-xl p-1 border border-gray-200 dark:border-gray-700">
+                            <div class="pos-stepper-box">
                                 <button
                                     type="button"
                                     wire:click="decrementModalQty"
-                                    class="w-9 h-9 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 font-black hover:bg-gray-200 dark:hover:bg-gray-600 transition flex items-center justify-center shadow-xs border border-gray-200/60 dark:border-gray-600 active:scale-95"
+                                    class="pos-stepper-btn"
+                                    title="Kurang 1"
                                 >
-                                    -
+                                    −
                                 </button>
-                                <span class="flex-grow text-center text-sm font-black text-gray-900 dark:text-white">
+                                <span class="flex-grow text-center text-base font-black text-gray-900 dark:text-white">
                                     {{ $modalQty }}
                                 </span>
                                 <button
                                     type="button"
                                     wire:click="incrementModalQty"
-                                    class="w-9 h-9 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 font-black hover:bg-gray-200 dark:hover:bg-gray-600 transition flex items-center justify-center shadow-xs border border-gray-200/60 dark:border-gray-600 active:scale-95"
+                                    class="pos-stepper-btn"
+                                    title="Tambah 1"
                                 >
                                     +
                                 </button>
@@ -498,41 +492,44 @@
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">
+                            <label class="block text-xs font-black text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
                                 Potongan Diskon (Rp)
                             </label>
-                            <input
-                                type="number"
-                                wire:model.live.debounce.300ms="modalDiscount"
-                                min="0"
-                                placeholder="0"
-                                class="w-full py-2 px-3 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                            />
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-xs font-bold text-gray-400 pointer-events-none">Rp</span>
+                                <input
+                                    type="number"
+                                    wire:model.live.debounce.300ms="modalDiscount"
+                                    min="0"
+                                    placeholder="0"
+                                    class="pos-discount-input"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 {{-- Footer Modal --}}
-                <div class="p-4 sm:p-5 bg-gray-50 dark:bg-gray-800/90 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between gap-3">
+                <div class="pos-modal-footer">
                     <div>
-                        <span class="text-[11px] font-medium text-gray-500 dark:text-gray-400 block">Subtotal Item Ini:</span>
-                        <span class="text-lg font-black text-primary-600 dark:text-primary-400">
+                        <span class="text-[11px] font-bold text-gray-500 dark:text-gray-400 block uppercase tracking-wider">Subtotal Item:</span>
+                        <span class="text-xl font-black text-orange-600 dark:text-orange-400">
                             Rp{{ number_format($modalItemSubtotal, 0, ',', '.') }}
                         </span>
                     </div>
 
-                    <div class="flex items-center gap-2.5">
+                    <div class="flex items-center gap-3">
                         <button
                             type="button"
                             wire:click="closeCustomModal"
-                            class="px-4 py-2.5 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-200/60 dark:hover:bg-gray-700 rounded-xl transition"
+                            class="pos-btn-cancel"
                         >
                             Batal
                         </button>
                         <button
                             type="button"
                             wire:click="addCustomizedItem"
-                            class="px-5 py-2.5 text-xs font-black text-white bg-primary-600 hover:bg-primary-700 active:scale-95 rounded-xl shadow-lg shadow-primary-600/30 transition flex items-center gap-2"
+                            class="pos-btn-submit"
                         >
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
@@ -545,7 +542,7 @@
         </div>
     @endif
 
-    {{-- Dedicated CSS Scoped untuk POS Modal & Backdrop --}}
+    {{-- Dedicated Scoped CSS untuk POS Modal, Cards, Checkbox, dan Stepper --}}
     <style>
         .pos-modal-overlay {
             position: fixed !important;
@@ -556,38 +553,342 @@
             width: 100vw !important;
             height: 100vh !important;
             background-color: rgba(15, 23, 42, 0.72) !important;
-            backdrop-filter: blur(6px) !important;
-            -webkit-backdrop-filter: blur(6px) !important;
+            backdrop-filter: blur(8px) !important;
+            -webkit-backdrop-filter: blur(8px) !important;
             z-index: 99999 !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
-            padding: 1rem !important;
+            padding: 1.25rem !important;
         }
         .pos-modal-card {
             position: relative !important;
             width: 100% !important;
-            max-width: 32rem !important;
-            max-height: 88vh !important;
-            background: #ffffff !important;
-            border-radius: 1.25rem !important;
-            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 0, 0, 0.12) !important;
-            border: 1px solid rgba(226, 232, 240, 0.9) !important;
+            max-width: 40rem !important;
+            max-height: 90vh !important;
+            background-color: #ffffff !important;
+            border-radius: 1.5rem !important;
+            box-shadow: 0 25px 65px -15px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0, 0, 0, 0.12) !important;
+            border: 1px solid #e2e8f0 !important;
             display: flex !important;
             flex-direction: column !important;
             overflow: hidden !important;
-            animation: posModalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            animation: posModalPop 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
         }
         .dark .pos-modal-card {
-            background: #1e293b !important;
+            background-color: #1e293b !important;
             border-color: #334155 !important;
-            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 25px 65px -15px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
             color: #f8fafc !important;
         }
-        @keyframes posModalIn {
-            0% { opacity: 0; transform: scale(0.95) translateY(8px); }
+        @keyframes posModalPop {
+            0% { opacity: 0; transform: scale(0.95) translateY(10px); }
             100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* Header Modal */
+        .pos-modal-header {
+            padding: 1.25rem 1.5rem !important;
+            background-color: #f8fafc !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 1rem !important;
+        }
+        .dark .pos-modal-header {
+            background-color: #1a2234 !important;
+            border-bottom-color: #334155 !important;
+        }
+        .pos-modal-close-btn {
+            flex-shrink: 0 !important;
+            width: 2.25rem !important;
+            height: 2.25rem !important;
+            border-radius: 9999px !important;
+            background-color: #e2e8f0 !important;
+            color: #475569 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transition: all 0.15s ease !important;
+        }
+        .pos-modal-close-btn:hover {
+            background-color: #cbd5e1 !important;
+            color: #0f172a !important;
+            transform: scale(1.05) !important;
+        }
+        .dark .pos-modal-close-btn {
+            background-color: #334155 !important;
+            color: #94a3b8 !important;
+        }
+        .dark .pos-modal-close-btn:hover {
+            background-color: #475569 !important;
+            color: #ffffff !important;
+        }
+
+        /* Body Modal */
+        .pos-modal-body {
+            padding: 1.5rem !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 1.5rem !important;
+            overflow-y: auto !important;
+            max-height: 62vh !important;
+        }
+
+        /* Choice Cards (Size) */
+        .pos-choice-card {
+            padding: 0.875rem 1rem !important;
+            border-radius: 1rem !important;
+            border: 2px solid #e2e8f0 !important;
+            background-color: #ffffff !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
+            gap: 0.5rem !important;
+            text-align: left !important;
+            cursor: pointer !important;
+            transition: all 0.15s ease !important;
+        }
+        .pos-choice-card:hover {
+            border-color: #f97316 !important;
+            background-color: #fffaf0 !important;
+        }
+        .pos-choice-card.is-selected {
+            border-color: #ea580c !important;
+            background-color: #fff7ed !important;
+            box-shadow: 0 4px 12px rgba(234, 88, 12, 0.18) !important;
+        }
+        .dark .pos-choice-card {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+        }
+        .dark .pos-choice-card:hover {
+            background-color: #293548 !important;
+        }
+        .dark .pos-choice-card.is-selected {
+            background-color: rgba(234, 88, 12, 0.2) !important;
+            border-color: #f97316 !important;
+        }
+        .pos-check-circle {
+            width: 1.25rem !important;
+            height: 1.25rem !important;
+            border-radius: 9999px !important;
+            border: 2px solid #cbd5e1 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex-shrink: 0 !important;
+            transition: all 0.15s ease !important;
+        }
+        .pos-check-circle.checked {
+            border-color: #ea580c !important;
+            background-color: #ea580c !important;
+        }
+
+        /* Topping Cards */
+        .pos-topping-card {
+            padding: 0.875rem 1rem !important;
+            border-radius: 1rem !important;
+            border: 2px solid #e2e8f0 !important;
+            background-color: #ffffff !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 0.75rem !important;
+            cursor: pointer !important;
+            transition: all 0.15s ease !important;
+            user-select: none !important;
+        }
+        .pos-topping-card:hover {
+            border-color: #cbd5e1 !important;
+            background-color: #f8fafc !important;
+        }
+        .pos-topping-card.is-selected {
+            border-color: #ea580c !important;
+            background-color: #fff7ed !important;
+            box-shadow: 0 3px 10px rgba(234, 88, 12, 0.15) !important;
+        }
+        .dark .pos-topping-card {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+        }
+        .dark .pos-topping-card:hover {
+            background-color: #293548 !important;
+        }
+        .dark .pos-topping-card.is-selected {
+            background-color: rgba(234, 88, 12, 0.2) !important;
+            border-color: #f97316 !important;
+        }
+        .pos-check-box {
+            width: 1.35rem !important;
+            height: 1.35rem !important;
+            border-radius: 0.375rem !important;
+            border: 2px solid #94a3b8 !important;
+            background-color: #ffffff !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex-shrink: 0 !important;
+            transition: all 0.15s ease !important;
+        }
+        .pos-check-box.checked {
+            border-color: #ea580c !important;
+            background-color: #ea580c !important;
+            box-shadow: 0 2px 5px rgba(234, 88, 12, 0.3) !important;
+        }
+        .dark .pos-check-box {
+            background-color: #0f172a !important;
+            border-color: #64748b !important;
+        }
+        .dark .pos-check-box.checked {
+            background-color: #ea580c !important;
+            border-color: #ea580c !important;
+        }
+        .pos-topping-price {
+            font-size: 0.8125rem !important;
+            font-weight: 800 !important;
+            color: #ea580c !important;
+            background-color: rgba(234, 88, 12, 0.1) !important;
+            padding: 0.25rem 0.5rem !important;
+            border-radius: 0.5rem !important;
+            flex-shrink: 0 !important;
+        }
+        .dark .pos-topping-price {
+            color: #fb923c !important;
+            background-color: rgba(234, 88, 12, 0.2) !important;
+        }
+
+        /* Stepper Qty Box */
+        .pos-stepper-box {
+            display: flex !important;
+            align-items: center !important;
+            gap: 0.5rem !important;
+            background-color: #f1f5f9 !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 0.875rem !important;
+            padding: 0.25rem !important;
+            height: 3rem !important;
+        }
+        .dark .pos-stepper-box {
+            background-color: #0f172a !important;
+            border-color: #334155 !important;
+        }
+        .pos-stepper-btn {
+            width: 2.5rem !important;
+            height: 2.5rem !important;
+            border-radius: 0.625rem !important;
+            background-color: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            color: #0f172a !important;
+            font-size: 1.25rem !important;
+            font-weight: 800 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            cursor: pointer !important;
+            transition: all 0.1s ease !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+        }
+        .pos-stepper-btn:hover {
+            background-color: #f8fafc !important;
+            border-color: #cbd5e1 !important;
+        }
+        .pos-stepper-btn:active {
+            transform: scale(0.92) !important;
+        }
+        .dark .pos-stepper-btn {
+            background-color: #1e293b !important;
+            border-color: #475569 !important;
+            color: #f8fafc !important;
+        }
+        .dark .pos-stepper-btn:hover {
+            background-color: #334155 !important;
+        }
+
+        /* Input Diskon */
+        .pos-discount-input {
+            width: 100% !important;
+            height: 3rem !important;
+            padding: 0.5rem 0.75rem 0.5rem 2.25rem !important;
+            font-size: 0.9375rem !important;
+            font-weight: 700 !important;
+            background-color: #ffffff !important;
+            border: 1.5px solid #cbd5e1 !important;
+            border-radius: 0.875rem !important;
+            color: #0f172a !important;
+            transition: all 0.15s ease !important;
+        }
+        .pos-discount-input:focus {
+            outline: none !important;
+            border-color: #ea580c !important;
+            box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15) !important;
+        }
+        .dark .pos-discount-input {
+            background-color: #0f172a !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+
+        /* Footer Modal */
+        .pos-modal-footer {
+            padding: 1.25rem 1.5rem !important;
+            background-color: #f8fafc !important;
+            border-top: 1px solid #e2e8f0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 1rem !important;
+        }
+        .dark .pos-modal-footer {
+            background-color: #1a2234 !important;
+            border-top-color: #334155 !important;
+        }
+        .pos-btn-cancel {
+            padding: 0.75rem 1.25rem !important;
+            font-size: 0.875rem !important;
+            font-weight: 700 !important;
+            color: #64748b !important;
+            border-radius: 0.875rem !important;
+            background: transparent !important;
+            cursor: pointer !important;
+            transition: all 0.15s ease !important;
+        }
+        .pos-btn-cancel:hover {
+            background-color: #e2e8f0 !important;
+            color: #0f172a !important;
+        }
+        .dark .pos-btn-cancel {
+            color: #94a3b8 !important;
+        }
+        .dark .pos-btn-cancel:hover {
+            background-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+        .pos-btn-submit {
+            padding: 0.75rem 1.5rem !important;
+            font-size: 0.875rem !important;
+            font-weight: 800 !important;
+            color: #ffffff !important;
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%) !important;
+            border-radius: 0.875rem !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 0.5rem !important;
+            cursor: pointer !important;
+            box-shadow: 0 4px 14px rgba(234, 88, 12, 0.35) !important;
+            transition: all 0.15s ease !important;
+            border: none !important;
+        }
+        .pos-btn-submit:hover {
+            background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%) !important;
+            box-shadow: 0 6px 18px rgba(234, 88, 12, 0.45) !important;
+            transform: translateY(-1px) !important;
+        }
+        .pos-btn-submit:active {
+            transform: scale(0.97) !important;
         }
     </style>
 </div>
+
 
