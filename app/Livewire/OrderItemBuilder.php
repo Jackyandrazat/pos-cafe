@@ -33,6 +33,9 @@ class OrderItemBuilder extends Component
     public float $modalDiscount = 0;
     public float $modalItemSubtotal = 0;
 
+    // Reset Confirm Modal State
+    public bool $showResetConfirmModal = false;
+
     protected $listeners = ['resetOrderItems'];
 
     public function mount(?int $orderId = null): void
@@ -409,10 +412,26 @@ class OrderItemBuilder extends Component
         $this->updateSession();
     }
 
-    public function clearAllItems(): void
+    public function promptResetCart(): void
+    {
+        $this->showResetConfirmModal = true;
+    }
+
+    public function cancelResetCart(): void
+    {
+        $this->showResetConfirmModal = false;
+    }
+
+    public function confirmResetCart(): void
     {
         $this->selectedItems = [];
         $this->updateSession();
+        $this->showResetConfirmModal = false;
+    }
+
+    public function clearAllItems(): void
+    {
+        $this->confirmResetCart();
     }
 
     public function updateSession(): void

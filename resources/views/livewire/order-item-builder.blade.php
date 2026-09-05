@@ -218,9 +218,8 @@
                     @if (! empty($selectedItems))
                         <button
                             type="button"
-                            wire:click="clearAllItems"
-                            wire:confirm="Yakin ingin mengosongkan seluruh item di keranjang?"
-                            class="text-xs text-red-600 hover:text-red-700 dark:text-red-400 flex items-center gap-1 transition"
+                            wire:click="promptResetCart"
+                            class="text-xs font-semibold text-red-600 hover:text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 px-2 py-1 rounded-lg flex items-center gap-1.5 transition"
                             title="Kosongkan Keranjang"
                         >
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -542,6 +541,55 @@
         </div>
     @endif
 
+    {{-- ========================================================================= --}}
+    {{-- DIALOG KONFIRMASI RESET KERANJANG (Custom POS Dialog)                     --}}
+    {{-- ========================================================================= --}}
+    @if ($showResetConfirmModal)
+        <div class="pos-modal-overlay" wire:click.self="cancelResetCart">
+            <div class="pos-confirm-card" onclick="event.stopPropagation()">
+                <div class="p-6 text-center space-y-4">
+                    {{-- Danger Icon Badge --}}
+                    <div class="w-16 h-16 rounded-2xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400 mx-auto flex items-center justify-center shadow-inner">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </div>
+
+                    {{-- Text Content --}}
+                    <div class="space-y-1.5">
+                        <h3 class="text-lg font-black text-gray-900 dark:text-white">
+                            Kosongkan Keranjang Pesanan?
+                        </h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed px-2">
+                            Seluruh <span class="font-bold text-gray-800 dark:text-gray-200">{{ $totalItemsCount }} item</span> yang telah dipilih akan dihapus dari daftar pesanan ini. Tindakan ini tidak dapat dibatalkan.
+                        </p>
+                    </div>
+
+                    {{-- Actions --}}
+                    <div class="flex items-center gap-3 pt-2">
+                        <button
+                            type="button"
+                            wire:click="cancelResetCart"
+                            class="flex-1 py-2.5 px-4 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition"
+                        >
+                            Batal
+                        </button>
+                        <button
+                            type="button"
+                            wire:click="confirmResetCart"
+                            class="flex-1 py-2.5 px-4 rounded-xl text-xs font-black text-white bg-red-600 hover:bg-red-700 active:scale-95 shadow-md shadow-red-600/30 transition flex items-center justify-center gap-1.5"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            <span>Ya, Kosongkan</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
     {{-- Dedicated Scoped CSS untuk POS Modal, Cards, Checkbox, dan Stepper --}}
     <style>
         .pos-modal-overlay {
@@ -574,6 +622,23 @@
             flex-direction: column !important;
             overflow: hidden !important;
             animation: posModalPop 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+        .pos-confirm-card {
+            position: relative !important;
+            width: 100% !important;
+            max-width: 24rem !important;
+            background-color: #ffffff !important;
+            border-radius: 1.25rem !important;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0, 0, 0, 0.1) !important;
+            border: 1px solid #e2e8f0 !important;
+            overflow: hidden !important;
+            animation: posModalPop 0.16s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+        .dark .pos-confirm-card {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+            color: #f8fafc !important;
         }
         .dark .pos-modal-card {
             background-color: #1e293b !important;

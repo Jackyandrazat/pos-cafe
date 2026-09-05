@@ -72,8 +72,17 @@ class OrderItemBuilderTest extends TestCase
         $updatedItem = session('selected_order_items')[0];
         $this->assertEquals(1, $updatedItem['qty']);
 
-        // Test reset/clear keranjang
-        $test->call('clearAllItems');
+        // Test dialog reset/clear keranjang konfirmasi
+        $test->call('promptResetCart')
+            ->assertSet('showResetConfirmModal', true);
+
+        $test->call('cancelResetCart')
+            ->assertSet('showResetConfirmModal', false);
+        $this->assertCount(1, session('selected_order_items', []));
+
+        $test->call('promptResetCart')
+            ->call('confirmResetCart')
+            ->assertSet('showResetConfirmModal', false);
         $this->assertCount(0, session('selected_order_items', []));
     }
 }
