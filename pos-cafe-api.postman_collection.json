@@ -1,8 +1,8 @@
 {
     "info": {
-        "name": "Labo By kodeeweb API v1",
+        "name": "Labo By kodeeweb API v1 (LakuPOS Ecosystem)",
         "_postman_id": "5f76f5df-f51d-4bc7-aadd-31d77b7feb4e",
-        "description": "Collection to exercise the Labo By kodeeweb public catalogue and authenticated order management APIs.",
+        "description": "Comprehensive Postman collection for LakuPOS backend API v1 (Laravel 11 + Filament v3), covering Authentication, Store Config & Geofencing, Table Service Calls, Catalogue, Orders, Payments, Webhooks, and Loyalty Program.",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -25,7 +25,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"name\": \"Walk-in Guest\",\n    \"phone\": \"+62 81234567890\"\n}",
+                            "raw": "{\n    \"name\": \"Budi Santoso\",\n    \"phone\": \"081234567890\",\n    \"table_number\": \"{{table_number}}\"\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
@@ -33,7 +33,140 @@
                             }
                         },
                         "url": "{{base_url}}/auth/guest",
-                        "description": "Creates a guest user and returns a Sanctum token. Save the token into the `auth_token` variable for subsequent calls."
+                        "description": "Creates a temporary guest customer session (4-hour TTL) and returns a Sanctum bearer token."
+                    }
+                },
+                {
+                    "name": "Member Sign-In",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"phone\": \"081234567890\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{base_url}}/auth/member",
+                        "description": "Logs in an existing cafe member by phone number and returns a Sanctum token with loyalty points and tier level."
+                    }
+                },
+                {
+                    "name": "Validate Auth Session",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{auth_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/auth/validate",
+                        "description": "Validates the current Sanctum bearer token and returns the authenticated user payload."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Store & Table Management",
+            "item": [
+                {
+                    "name": "Get Store Config & Geofence",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/store-config",
+                        "description": "Returns store configuration including self-order cashier cash payment permission (`self_order_allow_cash`) and geofence GPS coordinates with radius in meters."
+                    }
+                },
+                {
+                    "name": "Get Table Info",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/tables/{{table_number}}",
+                        "description": "Retrieves table detail (area name, capacity, status) for table QR verification."
+                    }
+                },
+                {
+                    "name": "Call Waiter to Table",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"reason\": \"bill\",\n    \"notes\": \"Mohon bawa mesin EDC\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{base_url}}/tables/{{table_number}}/call-waiter",
+                        "description": "Sends a waiter assistance notification for the specified table number."
+                    }
+                },
+                {
+                    "name": "Cancel Waiter Call",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/tables/{{table_number}}/cancel-waiter",
+                        "description": "Cancels an active waiter call for the specified table."
+                    }
+                },
+                {
+                    "name": "Get Waiter Call Status",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/tables/{{table_number}}/call-status",
+                        "description": "Checks whether a waiter call is currently pending or responded for the table."
                     }
                 }
             ]
@@ -66,7 +199,7 @@
                             }
                         ],
                         "url": "{{base_url}}/menus/{{menu_id}}",
-                        "description": "Fetches a single menu item by product ID."
+                        "description": "Fetches a single menu item by product ID with size variants and toppings."
                     }
                 },
                 {
@@ -81,6 +214,48 @@
                         ],
                         "url": "{{base_url}}/categories",
                         "description": "Returns all menu categories with their menu counts."
+                    }
+                },
+                {
+                    "name": "List Toppings",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/toppings",
+                        "description": "Returns all available add-on toppings with prices."
+                    }
+                },
+                {
+                    "name": "List Promotions",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/promotions",
+                        "description": "Returns currently active promotions (BOGO, Happy Hour, discount codes)."
+                    }
+                },
+                {
+                    "name": "List Payment Accounts",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/payment-accounts",
+                        "description": "Returns cafe bank accounts and static QRIS image URLs for manual payment."
                     }
                 }
             ]
@@ -122,11 +297,15 @@
                             {
                                 "key": "Authorization",
                                 "value": "Bearer {{auth_token}}"
+                            },
+                            {
+                                "key": "X-Idempotency-Key",
+                                "value": "{{idempotency_key}}"
                             }
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"order_type\": \"dine_in\",\n    \"table_id\": {{table_id}},\n    \"customer_name\": \"John Doe\",\n    \"notes\": \"Less sugar, please\",\n    \"items\": [\n        {\n            \"menu_id\": {{menu_id}},\n            \"quantity\": 2,\n            \"discount_amount\": 0\n        }\n    ]\n}",
+                            "raw": "{\n    \"order_type\": \"dine_in\",\n    \"table_id\": {{table_id}},\n    \"table_number\": \"{{table_number}}\",\n    \"customer_name\": \"Budi Santoso\",\n    \"notes\": \"Less sugar, ice dipisah\",\n    \"items\": [\n        {\n            \"menu_id\": {{menu_id}},\n            \"size_id\": 1,\n            \"quantity\": 2,\n            \"toppings\": [1, 2],\n            \"notes\": \"Espresso strong\"\n        }\n    ]\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
@@ -134,7 +313,7 @@
                             }
                         },
                         "url": "{{base_url}}/orders",
-                        "description": "Creates a draft order with one or more items. `order_type` accepts dine_in, take_away, or delivery."
+                        "description": "Creates a draft order with items, size modifiers, and toppings. Protected by `X-Idempotency-Key` header."
                     }
                 },
                 {
@@ -152,7 +331,7 @@
                             }
                         ],
                         "url": "{{base_url}}/orders/{{order_id}}",
-                        "description": "Returns the specified order with its line items."
+                        "description": "Returns the specified order with line items, toppings, and price totals."
                     }
                 },
                 {
@@ -170,7 +349,7 @@
                             }
                         ],
                         "url": "{{base_url}}/orders/{{order_id}}/submit",
-                        "description": "Transitions a draft order to pending. The order must have at least one item."
+                        "description": "Transitions a draft order to pending. Validates stock availability and pushes order to Kitchen Display."
                     }
                 },
                 {
@@ -188,7 +367,7 @@
                             }
                         ],
                         "url": "{{base_url}}/orders/{{order_id}}/cancel",
-                        "description": "Cancels an order that is draft, pending, or confirmed."
+                        "description": "Cancels an order and automatically restores previously deducted ingredient stock."
                     }
                 }
             ]
@@ -216,7 +395,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"menu_id\": {{menu_id}},\n    \"quantity\": 1,\n    \"discount_amount\": 0\n}",
+                            "raw": "{\n    \"menu_id\": {{menu_id}},\n    \"size_id\": 1,\n    \"quantity\": 1,\n    \"toppings\": [1],\n    \"notes\": \"Extra shot\"\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
@@ -224,7 +403,7 @@
                             }
                         },
                         "url": "{{base_url}}/orders/{{order_id}}/items",
-                        "description": "Adds a new item or increases the quantity if the product already exists on the draft order."
+                        "description": "Adds a new line item with optional size variant and toppings to a draft order."
                     }
                 },
                 {
@@ -247,7 +426,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"quantity\": 2,\n    \"discount_amount\": 5000\n}",
+                            "raw": "{\n    \"quantity\": 3,\n    \"discount_amount\": 5000,\n    \"notes\": \"Sedang\"\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
@@ -255,7 +434,7 @@
                             }
                         },
                         "url": "{{base_url}}/orders/{{order_id}}/items/{{order_item_id}}",
-                        "description": "Replaces the quantity/discount of an existing order item."
+                        "description": "Updates quantity, discount, or notes of an existing item in a draft order."
                     }
                 },
                 {
@@ -273,7 +452,7 @@
                             }
                         ],
                         "url": "{{base_url}}/orders/{{order_id}}/items/{{order_item_id}}",
-                        "description": "Removes an item from a draft order."
+                        "description": "Removes a line item and its toppings from a draft order."
                     }
                 }
             ]
@@ -281,6 +460,24 @@
         {
             "name": "Order Status",
             "item": [
+                {
+                    "name": "Get Order Status",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{auth_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/orders/{{order_id}}/status",
+                        "description": "Shows the current order status code and description."
+                    }
+                },
                 {
                     "name": "Get Order Status Timeline",
                     "request": {
@@ -295,14 +492,14 @@
                                 "value": "Bearer {{auth_token}}"
                             }
                         ],
-                        "url": "{{base_url}}/orders/{{order_id}}/status",
-                        "description": "Shows the current order status and the full status history."
+                        "url": "{{base_url}}/orders/{{order_id}}/timeline",
+                        "description": "Returns full event history logs for the order status timeline."
                     }
                 }
             ]
         },
         {
-            "name": "Payments",
+            "name": "Payments & QRIS",
             "item": [
                 {
                     "name": "List Order Payments",
@@ -323,7 +520,7 @@
                     }
                 },
                 {
-                    "name": "Create Payment",
+                    "name": "Create Payment Intent",
                     "request": {
                         "method": "POST",
                         "header": [
@@ -342,7 +539,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"payment_method\": \"cash\",\n    \"amount\": 100000\n}",
+                            "raw": "{\n    \"payment_method\": \"cash\",\n    \"amount\": 50000,\n    \"reference\": \"CASH-001\"\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
@@ -350,7 +547,25 @@
                             }
                         },
                         "url": "{{base_url}}/orders/{{order_id}}/payments",
-                        "description": "Records a payment. Methods: cash, qris, transfer, ewallet."
+                        "description": "Records a payment intent. Methods: cash, qris, transfer, midtrans, xendit."
+                    }
+                },
+                {
+                    "name": "Generate Dynamic QRIS for Order",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{auth_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/orders/{{order_id}}/qris",
+                        "description": "Generates dynamic QRIS string and QR code image payload for the order."
                     }
                 },
                 {
@@ -368,7 +583,205 @@
                             }
                         ],
                         "url": "{{base_url}}/payments/{{payment_id}}",
-                        "description": "Fetches a single payment by ID."
+                        "description": "Fetches a single payment record by ID."
+                    }
+                },
+                {
+                    "name": "Confirm Payment",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{auth_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/orders/{{order_id}}/payments/{{payment_id}}/confirm",
+                        "description": "Confirms payment and marks order as paid/forwarded to kitchen."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Webhooks (Payment Gateways)",
+            "item": [
+                {
+                    "name": "Midtrans Notification Webhook",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"transaction_time\": \"2026-09-08 15:30:00\",\n    \"transaction_status\": \"settlement\",\n    \"transaction_id\": \"midtrans-sample-123\",\n    \"status_message\": \"Midtrans payment notification\",\n    \"status_code\": \"200\",\n    \"signature_key\": \"sample-signature-key\",\n    \"order_id\": \"{{order_id}}\",\n    \"gross_amount\": \"50000.00\",\n    \"fraud_status\": \"accept\",\n    \"currency\": \"IDR\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{base_url}}/webhooks/midtrans",
+                        "description": "Callback endpoint called by Midtrans upon payment status change. Guarded by DB lock and processed_webhook_at idempotency."
+                    }
+                },
+                {
+                    "name": "DOKU Notification Webhook",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"order\": {\n        \"invoice_number\": \"{{order_id}}\",\n        \"amount\": 50000\n    },\n    \"transaction\": {\n        \"status\": \"SUCCESS\"\n    }\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{base_url}}/webhooks/doku",
+                        "description": "Callback endpoint called by DOKU payment gateway."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Loyalty & Promos",
+            "item": [
+                {
+                    "name": "Customer Loyalty Summary",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{auth_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/customers/{{customer_id}}/loyalty/summary",
+                        "description": "Returns member points balance, tier level (Bronze/Silver/Gold/Platinum), and lifetime spend."
+                    }
+                },
+                {
+                    "name": "Customer Challenges",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{auth_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/customers/{{customer_id}}/loyalty/challenges",
+                        "description": "Returns active gamification challenges and member progress."
+                    }
+                },
+                {
+                    "name": "Customer Loyalty Transactions",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{auth_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/customers/{{customer_id}}/loyalty/transactions",
+                        "description": "History of earned and redeemed loyalty points."
+                    }
+                },
+                {
+                    "name": "Validate Promo Code",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{auth_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"promo_code\": \"DISKON20\",\n    \"total_amount\": 100000\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{base_url}}/promotions/validate",
+                        "description": "Validates a promotion discount code against schedule and minimum order amount."
+                    }
+                },
+                {
+                    "name": "Validate Gift Card",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{auth_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"GIFT-2026-CORP\",\n    \"amount\": 50000\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{base_url}}/giftcards/validate",
+                        "description": "Validates voucher / gift card balance and redemption eligibility."
                     }
                 }
             ]
@@ -377,11 +790,13 @@
     "variable": [
         {
             "key": "base_url",
-            "value": "http://localhost:8000/api/v1"
+            "value": "https://pos-cafe-f38k.onrender.com/api/v1",
+            "description": "Production API base URL (or change to http://localhost:8000/api/v1 for local testing)"
         },
         {
             "key": "auth_token",
-            "value": ""
+            "value": "",
+            "description": "Sanctum bearer token obtained from /auth/guest or /auth/member"
         },
         {
             "key": "menu_id",
@@ -406,6 +821,18 @@
         {
             "key": "table_id",
             "value": "1"
+        },
+        {
+            "key": "table_number",
+            "value": "01"
+        },
+        {
+            "key": "customer_id",
+            "value": "1"
+        },
+        {
+            "key": "idempotency_key",
+            "value": "b819f71c-3b56-4c91-a18a-6b8a8bcf1592"
         }
     ]
 }
