@@ -51,21 +51,28 @@
 ## Endpoint Matrix
 | Endpoint | Method | Description | Auth |
 |---|---|---|---|
+| `/api/v1/store-config` | GET | Store config (self_order_allow_cash, geofence lat/lng/radius). | Public |
+| `/api/v1/tables/{tableNumber}` | GET | Table detail (area, capacity, status) for QR verification. | Public |
+| `/api/v1/auth/guest` | POST | Anonymous guest login (4-hr TTL session). | Public |
+| `/api/v1/auth/member` | POST | Member login via phone number (returns points & tier). | Public |
+| `/api/v1/auth/logout` | POST | Revoke current Sanctum token. | Sanctum |
 | `/api/v1/menus` | GET | Paginated menu list (`search`, `category_id`, `is_available`, `per_page` 1–50). | Public |
-| `/api/v1/menus/{id}` | GET | Menu detail inc. category & price snapshot. | Public |
+| `/api/v1/menus/{id}` | GET | Menu detail inc. category, size variants & toppings. | Public |
 | `/api/v1/categories` | GET | Category list with `menu_count`. | Public |
 | `/api/v1/orders` | GET | Current user’s orders (optional `status`). | Sanctum |
-| `/api/v1/orders` | POST | Create draft order + items in a single transaction. | Sanctum |
-| `/api/v1/orders/{order}` | GET | Order detail + items. | Sanctum |
+| `/api/v1/orders` | POST | Create draft order + items (supports `X-Idempotency-Key`). | Sanctum |
+| `/api/v1/orders/{order}` | GET | Order detail + items + totals snapshot. | Sanctum |
 | `/api/v1/orders/{order}/submit` | POST | Draft → pending (requires ≥1 item). | Sanctum |
-| `/api/v1/orders/{order}/cancel` | POST | Cancel draft/pending/confirmed orders. | Sanctum |
-| `/api/v1/orders/{order}/items` | POST | Add/merge items (available menu check, discount clamp). | Sanctum |
+| `/api/v1/orders/{order}/cancel` | POST | Cancel order (auto-restores deducted ingredient stock). | Sanctum |
+| `/api/v1/orders/{order}/items` | POST | Add/merge items (supports `size_id` & `toppings`). | Sanctum |
 | `/api/v1/orders/{order}/items/{item}` | PATCH | Update qty/discount. | Sanctum |
 | `/api/v1/orders/{order}/items/{item}` | DELETE | Remove item. | Sanctum |
-| `/api/v1/orders/{order}/status` | GET | Current status + timeline logs. | Sanctum |
+| `/api/v1/orders/{order}/status` | GET | Current status + timeline history logs. | Sanctum |
 | `/api/v1/orders/{order}/payments` | GET | Payments for order. | Sanctum |
-| `/api/v1/orders/{order}/payments` | POST | Record payment intent (validates outstanding balance). | Sanctum |
+| `/api/v1/orders/{order}/payments` | POST | Record payment intent (validates balance & idempotency). | Sanctum |
 | `/api/v1/payments/{payment}` | GET | Payment detail (ownership enforced). | Sanctum |
+| `/api/v1/payments/midtrans/notification` | POST | Midtrans webhook callback (with DB lock guard). | Public / IP |
+| `/api/v1/payments/xendit/callback` | POST | Xendit webhook callback (with DB lock guard). | Public / IP |
 
 ## API Reference
 ### 1. Authentication
@@ -269,9 +276,35 @@ Response `201` (abridged):
 }
 ```
 
+### Store Config & Geofencing Payload
+```
+GET /api/v1/store-config
+```
+Response `200`:
+```json
+{
+  "success": true,
+  "data": {
+    "store_name": "LakuPOS Cafe",
+    "self_order_allow_cash": true,
+    "geofence": {
+      "enabled": true,
+      "latitude": -6.2088,
+      "longitude": 106.8456,
+      "radius_meters": 50
+    }
+  }
+}
+```
+
+### Idempotency & Stock Concurrency
+- `POST /api/v1/orders` accepts `X-Idempotency-Key` header (UUID) to prevent duplicate charges or orders upon flaky mobile connections.
+- Deductions on `ingredients` utilize conditional atomic decrement queries (`WHERE stock_qty >= needed`), returning HTTP 422 if any required item or topping ingredient is insufficient.
+- Cancelling orders (`POST /api/v1/orders/{order}/cancel`) triggers automatic rollback of ingredients via `restoreIngredientsFromOrder()`.
+
 ## Testing & Validation
-- Existing PHPUnit suite runs via `php artisan test` (Sanctum-enabled controllers piggyback on Laravel’s testing stack).
-- Recommend adding feature tests per endpoint (token auth, status transitions, payment constraints) before deployment.
+- Automated test suite runs via `php artisan test` (including `StoreConfigTest`, `KitchenDisplayTest`, `ReceiptSettingsTest`).
+- UAT checklist covering 33 end-to-end scenarios is available in `docs/uat-checklist.md`.
 
 ## Deployment Checklist
 1. `composer install --no-dev` (prod).

@@ -1,6 +1,6 @@
 # Development Guidelines - POS Café System
 
-**Versi**: 1.0 | **Berlaku untuk**: Semua Developer
+**Versi**: 2.0 | **Berlaku untuk**: Semua Developer | **Last Updated**: September 2026
 
 ---
 
@@ -901,23 +901,28 @@ public function mount(): void
 - [ ] API docs updated
 - [ ] Changelog updated
 
-#### Database
+#### Database & Concurrency
 - [ ] Migrations reversible
-- [ ] Data safe
-- [ ] Indexes added for FK
-- [ ] No N+1 queries
+- [ ] Data safe & transactional (`DB::transaction`)
+- [ ] Stock decrement uses atomic conditional queries (`WHERE stock_qty >= needed`)
+- [ ] Webhook processing guarded by `lockForUpdate()` and `processed_webhook_at`
+- [ ] State transitions checked against `ALLOWED_TRANSITIONS`
+- [ ] Indexes added for FK and query filters
+- [ ] No N+1 queries (eager loading `with(['items', 'toppings'])`)
 
 #### Security
-- [ ] Input validated
-- [ ] Authorization checked
+- [ ] Input validated via FormRequest
+- [ ] Authorization checked via Policy / Sanctum
+- [ ] Idempotency key checked for financial & order endpoints
 - [ ] No sensitive data logged
-- [ ] SQL injection safe (using ORM)
+- [ ] SQL injection safe (using Eloquent ORM)
 
 #### Performance
-- [ ] Queries optimized
-- [ ] Caching implemented (if needed)
-- [ ] No memory leaks
-- [ ] Response time acceptable
+- [ ] Queries optimized & indexes verified
+- [ ] Caching implemented where appropriate
+- [ ] Filament assets optimized (`php artisan filament:optimize`)
+- [ ] OPcache enabled in production Docker container
+- [ ] Response time acceptable (<100ms API)
 
 ---
 
@@ -930,10 +935,10 @@ public function mount(): void
 php artisan serve --host=0.0.0.0 --port=8000
 npm run dev
 
-# Run tests
+# Run automated tests
 php artisan test
 
-# Format code
+# Format code (PSR-12)
 php vendor/bin/pint
 
 # Database commands
@@ -941,10 +946,15 @@ php artisan migrate
 php artisan migrate:rollback
 php artisan db:seed
 
-# Cache management
+# Cache & optimization
 php artisan cache:clear
-php artisan view:cache
 php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan filament:optimize
+
+# Expire abandoned unpaid orders (Cron)
+php artisan orders:expire-pending --minutes=15
 
 # Feature toggle
 php artisan feature:toggle kitchen_display --enable
@@ -974,15 +984,30 @@ php artisan queue:work           # Start queue worker
 php artisan schedule:run         # Run scheduled tasks
 ```
 
+### Docker & Production Deployment (Render + TiDB Cloud)
+
+```bash
+# Build & run container locally
+docker compose up -d --build
+
+# Verify container logs
+docker compose logs -f
+
+# Run migrations inside container
+docker compose exec app php artisan migrate --force
+```
+
 ---
 
 ## References
 
 - **Laravel Documentation**: https://laravel.com/docs/11
 - **Filament Documentation**: https://filamentphp.com
+- **TiDB Cloud Documentation**: https://docs.pingcap.com/tidbcloud
 - **PSR-12 Style Guide**: https://www.php-fig.org/psr/psr-12/
 - **API Design Guide**: https://restfulapi.net
 
 ---
 
-**Last Updated**: Mei 2026 | Dokumentasi v1.0
+**Last Updated**: September 2026 | Dokumentasi v2.0
+

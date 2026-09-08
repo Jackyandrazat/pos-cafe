@@ -1,6 +1,6 @@
 # POS Café System - Dokumentasi Lengkap
 
-**Versi**: 1.0.0 | **Terakhir Diupdate**: Mei 2026
+**Versi**: 2.0.0 | **Terakhir Diupdate**: September 2026
 
 ---
 
@@ -14,6 +14,7 @@
 6. [Instalasi & Setup](#instalasi--setup)
 7. [API Endpoints](#api-endpoints)
 8. [Alur Pengguna Utama](#alur-pengguna-utama)
+9. [UAT & Pengujian Sistem](#uat--pengujian-sistem)
 
 ---
 
@@ -21,42 +22,47 @@
 
 ### Visi & Tujuan
 
-**POS Café System** adalah platform point-of-sale (POS) terintegrasi yang dirancang khusus untuk manajemen operasional kafe modern. Sistem ini menghubungkan berbagai aspek bisnis kafe mulai dari katalog menu, inventory management, transaksi penjualan, hingga pelaporan komprehensif.
+**POS Café System (LakuPOS Ecosystem)** adalah platform point-of-sale (POS) dan Self-Order terintegrasi yang dirancang khusus untuk manajemen operasional kafe modern. Sistem ini menghubungkan berbagai aspek bisnis kafe mulai dari katalog menu, inventory management, transaksi penjualan, Kitchen Display System (KDS), hingga web self-order pelanggan berbasis scan QR per meja.
 
 ### Tujuan Utama
 
-- ✅ Mempercepat proses transaksi di kafe
-- ✅ Menjaga konsistensi data inventori dan penjualan
-- ✅ Memberikan visibilitas penuh ke management tentang performa bisnis
-- ✅ Meningkatkan akuntabilitas kasir melalui audit trail lengkap
-- ✅ Mendukung program loyalitas dan promosi dinamis
-- ✅ Integrasi pembayaran digital (QRIS, e-wallet)
+- ✅ Mempercepat proses transaksi dan eliminasi antrean kasir via Self-Order QR meja
+- ✅ Menjaga konsistensi data inventori, komposisi resep menu, dan konsumsi bahan baku topping secara atomik
+- ✅ Memberikan visibilitas penuh ke manajemen tentang performa bisnis dan analisis kerugian (waste logs)
+- ✅ Meningkatkan akuntabilitas kasir melalui audit trail shift kasir dan rekonsiliasi kas
+- ✅ Mendukung program loyalitas member bertingkat (tiers) dan promosi dinamis (BOGO/Happy Hour)
+- ✅ Integrasi multi-payment gateway (Midtrans, Xendit, QRIS, Transfer Bank, Kasir) dengan idempotency guard
+- ✅ Keamanan anti-fraud via verifikasi GPS Geofencing Kafe
 
 ### Target Pengguna
 
 | Persona | Peran | Hak Akses |
 |---------|------|----------|
-| **Owner** | Monitoring bisnis & approval strategis | Akses penuh ke semua modul + laporan global |
-| **Admin** | Manajemen katalog, inventory, setup akun | Semua modul kecuali approval owner-only |
-| **Kasir** | Input order & pembayaran, laporan pribadi | Order, payment, shift, rekap data pribadi |
-| **Inventory/Dapur** | Update stok & monitoring produksi | Inventory, pembelian, KDS (Kitchen Display) |
+| **Owner** | Monitoring bisnis & approval strategis | Akses penuh ke semua modul + laporan laba rugi global |
+| **Admin** | Manajemen katalog, inventory, setup toko & struk | Semua modul operasional, resep, dan konfigurasi |
+| **Kasir** | Input order & pembayaran, laporan shift pribadi | Order POS, payment, buka/tutup shift, struk WhatsApp |
+| **Barista/Dapur** | Memproses antrean tiket pesanan | Kitchen Display System (KDS realtime transitions) |
+| **Pelanggan (Tamu/Member)** | Pemesanan mandiri via scan QR meja | Self-Order Hub PWA (katalog, kustomisasi, tracking, loyalty) |
 
 ---
 
 ## Teknologi & Stack
 
-### Backend
-- **Framework**: Laravel 11 (PHP 8.2+)
+### Backend & Database
+- **Framework**: Laravel 11.x (PHP 8.3-FPM)
+- **Admin Panel**: Filament v3.x + Livewire 3 + Alpine.js
+- **Database**: TiDB Cloud Serverless MySQL (Singapore Region) / MySQL 8.0+
 - **Authentication**: Laravel Sanctum (Token-based API)
-- **Database**: MySQL 8.0+
-- **Admin Panel**: Filament v3.3
-- **PDF Generation**: DOMPDF
+- **Web Server & Container**: Nginx + Docker multi-stage build (Alpine Linux)
+- **Cloud Hosting**: Render Cloud (`https://pos-cafe-f38k.onrender.com`)
 
-### Frontend
-- **Build Tool**: Vite
-- **Charting**: Chart.js 4.4.9
-- **HTTP Client**: Axios
-- **Templating**: Blade (Laravel)
+### Frontend (Customer Self-Order Hub)
+- **Framework**: React 18 + Vite + TypeScript
+- **Styling**: Tailwind CSS + shadcn/ui
+- **Icons**: Lucide React
+- **Audio Notification**: Native Web Audio API Synthesizer (Chime Dapur)
+- **Location & Geofencing**: Geolocation API + Haversine Formula
+- **Hosting**: Vercel CDN (`cafe-order-hub`)
 
 ### Development & Testing
 - **Package Manager**: Composer
@@ -859,34 +865,41 @@ Authorization: Bearer {token}
    └─ Auto-complete saat payment done
 ```
 
-### 📊 Alur Owner (Monitoring & Reporting)
+### 📱 Alur Pelanggan (Customer Self-Order PWA)
 
 ```
-1. VIEW DASHBOARD
-   └─ Real-time sales overview
-   └─ Top selling products
-   └─ Charts & KPIs
+1. SCAN QR MEJA
+   └─ Kamera HP men-scan QR meja (contoh: /table/05)
+   └─ Nomor Meja 05 terikat otomatis ke sesi
 
-2. GENERATE REPORTS
-   └─ Sales report (daily/weekly/monthly)
-   └─ Per-cashier performance
-   └─ Inventory report
-   └─ Export to CSV
+2. VERIFIKASI GEOFENCING GPS
+   └─ Browser mendeteksi koordinat lokasi pelanggan
+   └─ Hitung jarak ke kafe (Haversine formula)
+   └─ Jika di luar area kafe: Opsi bayar tunai dinonaktifkan
 
-3. MANAGE INVENTORY
-   └─ View expired ingredients
-   └─ Create purchase orders
-   └─ Monitor stock levels
+3. IDENTITAS (TAMU / MEMBER)
+   └─ Tamu: Masukkan nama & nomor HP (TTL 4 jam)
+   └─ Atau Member: Masuk nomor WA (cek saldo poin & tier)
+   └─ Escape hatch: Tombol "Bukan [Nama]? Masuk sebagai Tamu Baru"
 
-4. REVIEW LOYALTY
-   └─ High-value customers
-   └─ Loyalty point transactions
-   └─ Challenge progress
+4. PILIH & KUSTOMISASI MENU
+   └─ Pilih kategori menu
+   └─ Buka Bottom Sheet Modal: pilih ukuran, topping, gula/es
+   └─ Swipe-down gesture atau tombol back menutup modal aman
 
-5. MANAGE PROMOTIONS
-   └─ Create promo codes
-   └─ Set schedule & discount
-   └─ View usage statistics
+5. CHECKOUT & PEMBAYARAN
+   └─ Periksa ringkasan pesanan & promo otomatis (BOGO/Diskon)
+   └─ Pilih metode bayar: Kasir (jika di dalam kafe), QRIS, atau Gateway
+   └─ Order terkirim ke KDS Dapur
+
+6. TRACKING & DIGITAL CHIME
+   └─ Memantau status realtime (submitted → confirmed → preparing → ready)
+   └─ Saat status READY: HP membunyikan nada chime dua nada (587 & 880 Hz)
+   └─ Pelanggan mengambil pesanan di bar
+
+7. SELESAI & LOGOUT SESI
+   └─ Status COMPLETED: Muncul tombol "Selesai & Keluar Sesi"
+   └─ Sesi meja & keranjang dibersihkan untuk pelanggan berikutnya
 ```
 
 ---
@@ -900,6 +913,7 @@ Untuk informasi detail tentang fitur-fitur advanced, lihat dokumentasi khusus:
 - [Dynamic Pricing & Promotions](docs/dynamic-pricing-promotions.md) - Promo dengan schedule
 - [Inventory Waste & Loyalty](docs/inventory-waste-and-loyalty.md) - Waste tracking & loyalty
 - [Web Self-Order API](api-implementation.md) - Self-service ordering
+- [UAT Testing Checklist](docs/uat-checklist.md) - 33 skenario pengujian komprehensif
 
 ---
 

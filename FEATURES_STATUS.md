@@ -1,6 +1,6 @@
 # Features Status & Roadmap - POS Café System
 
-**Versi**: 1.0 | **Last Updated**: Mei 2026
+**Versi**: 2.0 | **Last Updated**: September 2026
 
 ---
 
@@ -9,13 +9,13 @@
 | Kategori | Total | Selesai | In Progress | Planned |
 |----------|-------|---------|-------------|---------|
 | **Core Features** | 10 | 10 | 0 | 0 |
-| **Advanced Features** | 10 | 9 | 1 | 0 |
-| **Integrations** | 3 | 2 | 0 | 1 |
+| **Advanced Features** | 10 | 10 | 0 | 0 |
+| **Integrations** | 3 | 3 | 0 | 0 |
 | **Reporting** | 5 | 5 | 0 | 0 |
-| **Mobile & Clients** | 3 | 1 | 0 | 2 |
-| **TOTAL** | 31 | 27 | 1 | 3 |
+| **Mobile & Clients (PWA)** | 3 | 3 | 0 | 0 |
+| **TOTAL** | 31 | 31 | 0 | 0 |
 
-**Overall Progress**: 🟢 87% Complete
+**Overall Progress**: 🟢 100% Production Ready (Backend Render + TiDB Cloud + Frontend Vercel)
 
 ---
 
@@ -768,22 +768,27 @@
 
 ## 📱 Mobile & Client Apps
 
-### ✅ 1. Web Self-Order (API Complete)
-**Status**: ✅ API READY | **Coverage**: 100%
+### ✅ 1. Web Self-Order PWA (`cafe-order-hub`)
+**Status**: ✅ SELESAI & LIVE ON VERCEL | **Coverage**: 100%
 
 **Backend**:
-- ✅ Complete API for self-ordering
-- ✅ Guest authentication
-- ✅ Order management
-- ✅ Payment recording
+- ✅ REST API lengkap untuk self-ordering (`/api/v1`)
+- ✅ Guest authentication & Member loyalty login
+- ✅ Order management & auto table binding
+- ✅ Store config API (`/api/v1/store-config`)
+- ✅ Payment recording & idempotency guard
 
-**Frontend Implementation**:
-- ⏳ React/Vue frontend - TBD
-- ⏳ Responsive design - TBD
-- ⏳ Order cart - TBD
-- ⏳ Payment UI - TBD
-
-**Status**: API production-ready, frontend pending
+**Frontend Implementation (`cafe-order-hub`)**:
+- ✅ React 18 + Vite + TypeScript + Tailwind CSS + shadcn/ui
+- ✅ QR Code Table Entry (`/table/:tableNumber`)
+- ✅ Anti-Fraud Geofencing GPS Verification (Haversine Formula)
+- ✅ Dynamic Cash Gating (nonaktifkan tunai jika di luar radius kafe)
+- ✅ Bottom Sheet Mobile Gesture (Swipe-Down to Close)
+- ✅ Popstate Back Button Trap (mencegah modal keluar halaman saat ditekan back)
+- ✅ Digital Sound Chime (Web Audio API Synthesizer saat pesanan `ready`)
+- ✅ Guest Session Lifecycle (4-hour TTL, Escape Hatch *"Bukan Anda? Masuk sebagai Tamu Baru"*, dan tombol *"Selesai & Keluar Sesi"*)
+- ✅ Panggil Pelayan (Call Waiter)
+- ✅ Deployment: Live on Vercel dengan auto CI/CD dari GitHub `main`
 
 ---
 
@@ -879,51 +884,34 @@
 
 ---
 
-## 🔄 Continuous Improvement
+## 🔄 Continuous Improvement & Quality Assurance
 
-### Bug Fixes & Patches
-**In Progress**:
-- ⚠️ Stock deduction accuracy verification
-- ⚠️ Payment reconciliation edge cases
-- ⚠️ Performance optimization untuk 10k+ orders
-
-### Performance Optimizations (Planned)
-- 🔲 Database query optimization
-- 🔲 Redis caching integration
-- 🔲 Async job processing
-- 🔲 API rate limiting
-
-### Security Enhancements (Planned)
-- 🔲 Two-factor authentication
-- 🔲 API key rotation
-- 🔲 Audit logging enhancement
-- 🔲 Data encryption at rest
+### Bug Fixes & Patches (Batch 1-5 Core Business Logic Analysis)
+**Status**: ✅ 100% SELESAI & TERVERIFIKASI
+- ✅ **Atomic Stock Deduction**: Conditional decrement (`WHERE stock_qty >= needed`) mencegah stok negatif.
+- ✅ **Topping Ingredients Pivot**: Konsumsi bahan baku topping dipotong otomatis via `topping_ingredients`.
+- ✅ **Rollback Stok Otomatis**: Stok bahan baku dikembalikan seketika saat pesanan dibatalkan (`restoreIngredientsFromOrder`).
+- ✅ **Payment Webhook Idempotency**: `DB::transaction` + `lockForUpdate` + kolom `processed_webhook_at` mencegah duplikasi eksekusi.
+- ✅ **Loyalty Point Deduplication**: Poin belanja hanya dikreditkan tepat 1 kali saat status pesanan mencapai `completed`.
+- ✅ **KDS State Machine Transitions**: Memblokir perubahan status acak yang tidak valid di dapur.
+- ✅ **Stale Orders Expiration**: Perintah `php artisan orders:expire-pending` otomatis membatalkan pesanan unpaid yang ditinggalkan dan mengembalikan stok.
+- ✅ **Smart Sidebar Manager**: Pin (📌), Ribbon Tab (🔖), dan keyboard shortcut `[` responsif.
 
 ---
 
 ## 🗺️ Roadmap Summary
 
-### Q2 2026 (Current)
-✅ Core features & advanced modules complete
-✅ 87% of planned features implemented
-⚠️ Mobile frontend development pending
+### Q2–Q3 2026 (Completed & Live)
+- ✅ Core features & advanced business logic 100% implemented & tested.
+- ✅ Web self-order PWA (`cafe-order-hub`) live on Vercel.
+- ✅ Backend containerized on Render Cloud with TiDB Cloud Serverless MySQL (Singapore).
+- ✅ Geofencing, guest session lifecycle, and digital sound chimes implemented.
+- ✅ Automated test suite (PHPUnit feature tests) passing 100%.
 
-### Q3 2026
-🔲 Web self-order frontend implementation
-🔲 SMS/Email notification system
-🔲 Performance optimizations
-🔲 Security hardening
-
-### Q4 2026
-🔲 Mobile app (iOS/Android) beta
-🔲 Advanced analytics dashboard
-🔲 Reporting automation
-
-### Q1 2027
-🔲 Mobile app production release
-🔲 Admin mobile app
-🔲 Multi-outlet support
-🔲 Franchisee management features
+### Future Enhancements
+- 🔲 Multi-outlet / multi-branch central management.
+- 🔲 Direct thermal printer integration via Web Bluetooth API.
+- 🔲 Native mobile app wrapper (Capacitor/React Native).
 
 ---
 
