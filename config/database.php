@@ -63,6 +63,9 @@ return [
                     }
                     $ca = file_exists($tempCa) ? $tempCa : null;
                 }
+                if (! $ca && file_exists('/etc/ssl/certs/isrgrootx1.pem')) {
+                    $ca = '/etc/ssl/certs/isrgrootx1.pem';
+                }
                 if (! $ca && file_exists('/etc/ssl/certs/ca-certificates.crt')) {
                     $ca = '/etc/ssl/certs/ca-certificates.crt';
                 }

@@ -30,6 +30,9 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
         pcntl \
         exif
 
+# Download official Let's Encrypt ISRG Root X1 CA cert for TiDB Cloud
+RUN curl -fsSL https://letsencrypt.org/certs/isrgrootx1.pem -o /etc/ssl/certs/isrgrootx1.pem
+
 # Install Composer from official image
 COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
 
