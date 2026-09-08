@@ -1,8 +1,8 @@
 #!/bin/sh
 set -e
 
-# Port substitution for Render/Cloud platforms
-PORT="${PORT:-80}"
+# Port substitution for Hugging Face (7860) / Render (10000) / Standard (80)
+PORT="${PORT:-7860}"
 sed -i "s/PORT_PLACEHOLDER/${PORT}/g" /etc/nginx/http.d/default.conf
 
 # Handle TiDB Cloud SSL CA certificate
@@ -18,15 +18,16 @@ elif [ -z "$MYSQL_ATTR_SSL_CA" ]; then
     fi
 fi
 
-# Ensure storage directories exist and have proper permissions
+# Ensure storage & runtime directories exist and have proper permissions for any UID
 mkdir -p /var/www/html/storage/framework/sessions \
          /var/www/html/storage/framework/views \
          /var/www/html/storage/framework/cache \
          /var/www/html/storage/logs \
-         /var/www/html/bootstrap/cache
+         /var/www/html/bootstrap/cache \
+         /var/lib/nginx/tmp \
+         /var/log/nginx
 
-chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache /var/lib/nginx /var/log/nginx /var/run
 
 # Create storage symlink
 php artisan storage:link --force || true
