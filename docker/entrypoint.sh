@@ -63,13 +63,13 @@ if [ "$RUN_MIGRATIONS" = "true" ]; then
     fi
 fi
 
-# Clear & cache configuration in production if app key is set
-if [ -n "$APP_KEY" ]; then
-    echo "Caching configuration and routes..."
-    php artisan config:clear
-    php artisan route:clear
-    php artisan view:clear
-fi
+# Optimize and cache configuration, routes, views, and Filament components
+echo "Optimizing application cache and Filament components for high speed..."
+php artisan config:cache || true
+php artisan route:cache || true
+php artisan view:cache || true
+php artisan filament:optimize || true
+php artisan icons:cache || true
 
 echo "Starting services via supervisord on port ${PORT}..."
 exec /usr/bin/supervisord -c /etc/supervisord.conf
