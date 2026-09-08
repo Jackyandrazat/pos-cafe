@@ -80,8 +80,9 @@ class QrisController extends Controller
      */
     public function generateForOrder(Request $request, Order $order): JsonResponse
     {
-        // Pastikan order milik user yang request
-        if ($order->user_id !== $request->user()->id) {
+        // Pastikan order milik user yang request atau user adalah staf (admin, kasir, owner)
+        $user = $request->user();
+        if ($order->user_id !== $user->id && ! $user->hasAnyRole(['admin', 'kasir', 'owner'])) {
             return response()->json(['message' => 'Akses ditolak.'], Response::HTTP_FORBIDDEN);
         }
 

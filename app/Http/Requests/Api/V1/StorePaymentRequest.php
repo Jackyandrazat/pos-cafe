@@ -11,6 +11,24 @@ class StorePaymentRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('method') && ! $this->has('payment_method')) {
+            $this->merge(['payment_method' => $this->input('method')]);
+        }
+
+        if (! $this->filled('amount')) {
+            $order = $this->route('order');
+            if ($order instanceof \App\Models\Order) {
+                $captured = (float) $order->payments()->where('status', 'captured')->sum('amount_paid');
+                $due = max((float) ($order->total_order ?? 0) - $captured, 0);
+                if ($due > 0) {
+                    $this->merge(['amount' => $due]);
+                }
+            }
+        }
+    }
+
     public function rules(): array
     {
         return [

@@ -38,6 +38,13 @@ class PromotionController extends Controller
             'guest_id' => ['nullable', 'numeric'], // optional kalau mau track per user
         ]);
 
+        $user = $request->user();
+        if ($user && $user->is_guest) {
+            return response()->json([
+                'message' => 'Promo dan voucher hanya berlaku untuk akun Member terdaftar. Silakan masuk sebagai Member.'
+            ], 422);
+        }
+
         $now = Carbon::now();
         $code = strtoupper(trim($request->code));
         $subtotal = (int) $request->subtotal;

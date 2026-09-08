@@ -13,6 +13,11 @@ class ListOrders extends ListRecords
 {
     protected static string $resource = OrderResource::class;
 
+    public static function canAccess(array $parameters = []): bool
+    {
+        return static::getResource()::canAccess();
+    }
+
     protected static string $view = 'filament.resources.order-resource.pages.list-orders';
 
     #[Url]
@@ -79,8 +84,7 @@ class ListOrders extends ListRecords
 
     public function openOrderDetailModal(int $orderId): void
     {
-        $order = (clone $this->getFilteredSortedTableQuery())
-            ->with(['table', 'order_items.product', 'order_items.toppings', 'user'])
+        $order = Order::with(['table', 'order_items.product', 'order_items.toppings', 'user'])
             ->find($orderId);
 
         if (! $order instanceof Order) {

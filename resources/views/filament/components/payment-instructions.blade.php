@@ -67,14 +67,28 @@
         @endif
     @endif
 
-    {{-- Virtual Account --}}
-    @if (! empty($meta['account_number']))
+    {{-- Virtual Account / Bank Transfer --}}
+    @if (! empty($meta['account_number']) && $method === 'transfer')
         <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 space-y-2">
-            <p class="text-xs font-semibold text-green-700 dark:text-green-300 uppercase">🏦 Virtual Account</p>
-            <div class="flex items-baseline gap-2">
-                <span class="text-sm font-medium text-gray-600">{{ strtoupper($meta['bank'] ?? $channel ?? 'Bank') }}</span>
-                <span class="text-2xl font-bold text-gray-900 dark:text-white tracking-widest">{{ $meta['account_number'] }}</span>
+            <p class="text-xs font-semibold text-green-700 dark:text-green-300 uppercase">🏦 Rekening Transfer Bank</p>
+            <div class="flex items-baseline justify-between gap-2 flex-wrap">
+                <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">{{ strtoupper($meta['bank'] ?? $channel ?? 'Bank') }}</span>
+                <span class="text-xl font-mono font-bold text-gray-900 dark:text-white tracking-wider">{{ $meta['account_number'] }}</span>
             </div>
+            @if (! empty($meta['account_name']))
+                <p class="text-xs text-gray-600 dark:text-gray-300 font-medium">
+                    Atas Nama (A/N): <span class="font-bold text-gray-900 dark:text-white">{{ $meta['account_name'] }}</span>
+                </p>
+            @endif
+            @if (! empty($meta['instructions']))
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">
+                    {{ $meta['instructions'] }}
+                </p>
+            @elseif (! empty($meta['note']))
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {{ $meta['note'] }}
+                </p>
+            @endif
         </div>
     @elseif ($method === 'transfer' && ! empty($meta['note']))
         <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-3">
@@ -83,11 +97,28 @@
         </div>
     @endif
 
-    {{-- E-Wallet phone --}}
-    @if (! empty($meta['phone']))
-        <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3 space-y-1">
-            <p class="text-xs font-semibold text-purple-700 dark:text-purple-300 uppercase">💳 {{ strtoupper($channel ?? 'E-Wallet') }}</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white tracking-widest">{{ $meta['phone'] }}</p>
+    {{-- E-Wallet --}}
+    @if ((! empty($meta['phone']) || ! empty($meta['account_number'])) && $method === 'ewallet')
+        <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3 space-y-2">
+            <p class="text-xs font-semibold text-purple-700 dark:text-purple-300 uppercase">💳 Akun E-Wallet ({{ strtoupper($channel ?? 'E-Wallet') }})</p>
+            <div class="flex items-baseline justify-between gap-2 flex-wrap">
+                <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">{{ strtoupper($channel ?? 'E-Wallet') }}</span>
+                <span class="text-xl font-mono font-bold text-gray-900 dark:text-white tracking-wider">{{ $meta['phone'] ?? $meta['account_number'] }}</span>
+            </div>
+            @if (! empty($meta['account_name']))
+                <p class="text-xs text-gray-600 dark:text-gray-300 font-medium">
+                    Atas Nama (A/N): <span class="font-bold text-gray-900 dark:text-white">{{ $meta['account_name'] }}</span>
+                </p>
+            @endif
+            @if (! empty($meta['instructions']))
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">
+                    {{ $meta['instructions'] }}
+                </p>
+            @elseif (! empty($meta['note']))
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {{ $meta['note'] }}
+                </p>
+            @endif
         </div>
     @elseif ($method === 'ewallet' && ! empty($meta['note']))
         <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3">

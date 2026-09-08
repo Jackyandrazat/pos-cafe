@@ -1,11 +1,11 @@
-<div class="mt-4 space-y-6">
+<div class="space-y-6">
     {{-- Layout Utama Split POS: Katalog di Kiri (65%), Keranjang di Kanan (35%) --}}
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         {{-- ========================================================================= --}}
         {{-- KOLOM KIRI: KATALOG PRODUK POS (lg:col-span-8)                             --}}
         {{-- ========================================================================= --}}
-        <div class="lg:col-span-8 space-y-4">
+        <div class="lg:col-span-7 xl:col-span-8 space-y-4">
             
             {{-- Header Katalog & Search Bar --}}
             <div class="p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm space-y-3">
@@ -86,7 +86,7 @@
             </div>
 
             {{-- Grid Kartu Produk POS --}}
-            <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3.5">
+            <div class="pos-product-grid grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4" style="gap: 1.25rem;">
                 @forelse ($products as $product)
                     @php
                         $inStock = $product->hasSufficientStock(1);
@@ -198,7 +198,7 @@
         {{-- ========================================================================= --}}
         {{-- KOLOM KANAN: PANEL KERANJANG & RINGKASAN POS (lg:col-span-4)               --}}
         {{-- ========================================================================= --}}
-        <div class="lg:col-span-4 sticky top-6 space-y-4">
+        <div class="lg:col-span-5 xl:col-span-4 sticky top-6 space-y-4">
             <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden flex flex-col">
                 
                 {{-- Header Keranjang --}}
@@ -577,7 +577,7 @@
                         <button
                             type="button"
                             wire:click="confirmResetCart"
-                            class="flex-1 py-2.5 px-4 rounded-xl text-xs font-black text-white bg-red-600 hover:bg-red-700 active:scale-95 shadow-md shadow-red-600/30 transition flex items-center justify-center gap-1.5"
+                            class="pos-btn-submit"
                         >
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -592,6 +592,19 @@
 
     {{-- Dedicated Scoped CSS untuk POS Modal, Cards, Checkbox, dan Stepper --}}
     <style>
+        .pos-product-grid {
+            display: grid !important;
+            gap: 1.25rem !important;
+            row-gap: 1.25rem !important;
+            column-gap: 1.25rem !important;
+        }
+        @media (max-width: 640px) {
+            .pos-product-grid {
+                gap: 0.875rem !important;
+                row-gap: 0.875rem !important;
+                column-gap: 0.875rem !important;
+            }
+        }
         .pos-modal-overlay {
             position: fixed !important;
             top: 0 !important;

@@ -185,6 +185,10 @@ class OrderController extends Controller
 
             // --- Promo: validasi + catat usage di dalam transaksi ---
             if (Feature::enabled('promotions') && ! empty($data['promotion_code'])) {
+                if ($user->is_guest) {
+                    abort(Response::HTTP_UNPROCESSABLE_ENTITY, 'Promo dan voucher hanya berlaku untuk akun Member terdaftar.');
+                }
+
                 try {
                     $promotionResult = PromotionService::validateAndCalculate(
                         $data['promotion_code'],
@@ -253,7 +257,7 @@ class OrderController extends Controller
     {
         $this->ensureOrderOwner($request->user(), $order);
 
-        return new OrderResource($order->load(['items.product','items.toppings', 'customer']));
+        return new OrderResource($order->load(['items.product', 'items.toppings', 'items.size', 'customer']));
     }
 
     public function submit(Request $request, Order $order): OrderResource
@@ -313,7 +317,7 @@ class OrderController extends Controller
 
     protected function ensureOrderOwner($user, Order $order): void
     {
-        if ($order->user_id !== $user->id) {
+        if ($order->user_id !== $user->id && ! $user->hasAnyRole(['admin', 'kasir', 'owner'])) {
             abort(Response::HTTP_FORBIDDEN, 'You do not have access to this order.');
         }
     }

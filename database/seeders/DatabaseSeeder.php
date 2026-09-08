@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             ['name' => 'admin', 'guard_name' => 'web', 'created_at' => now(), 'updated_at' => now()],
             ['name' => 'kasir', 'guard_name' => 'web', 'created_at' => now(), 'updated_at' => now()],
             ['name' => 'owner', 'guard_name' => 'web', 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'kitchen', 'guard_name' => 'web', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
         // Admin User

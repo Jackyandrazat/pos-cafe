@@ -82,19 +82,32 @@ class ManualGateway implements PaymentGatewayInterface
 
     protected function createEwalletCharge(float $amount, ?string $channel): array
     {
-        $ewallets = config('payment.ewallets', []);
-        $info = $ewallets[$channel] ?? null;
+        $dbAccount = $channel
+            ? \App\Models\PaymentAccount::active()->ewallets()->where('provider_code', $channel)->first()
+            : \App\Models\PaymentAccount::active()->ewallets()->first();
 
         $payload = [
             'amount'  => $amount,
-            'channel' => $channel,
+            'channel' => $channel ?? $dbAccount?->provider_code,
         ];
 
-        if ($info && ! empty($info['phone'])) {
-            $payload['phone'] = $info['phone'];
-            $payload['note']  = "Transfer ke {$info['label']} nomor {$info['phone']}, lalu konfirmasi ke kasir";
+        if ($dbAccount) {
+            $payload['phone']          = $dbAccount->account_number;
+            $payload['account_number'] = $dbAccount->account_number;
+            $payload['account_name']   = $dbAccount->account_name;
+            $payload['instructions']   = $dbAccount->instructions;
+            $payload['note']           = "Transfer ke {$dbAccount->name} nomor {$dbAccount->account_number} a.n {$dbAccount->account_name}, lalu konfirmasi ke kasir";
         } else {
-            $payload['note'] = 'Konfirmasi pembayaran e-wallet ke kasir setelah transfer selesai';
+            $ewallets = config('payment.ewallets', []);
+            $info = $ewallets[$channel] ?? null;
+
+            if ($info && ! empty($info['phone'])) {
+                $payload['phone']          = $info['phone'];
+                $payload['account_number'] = $info['phone'];
+                $payload['note']           = "Transfer ke {$info['label']} nomor {$info['phone']}, lalu konfirmasi ke kasir";
+            } else {
+                $payload['note'] = 'Konfirmasi pembayaran e-wallet ke kasir setelah transfer selesai';
+            }
         }
 
         return [
@@ -107,19 +120,30 @@ class ManualGateway implements PaymentGatewayInterface
 
     protected function createTransferCharge(float $amount, ?string $channel): array
     {
-        $vas = config('payment.virtual_accounts', []);
-        $info = $vas[$channel] ?? null;
+        $dbAccount = $channel
+            ? \App\Models\PaymentAccount::active()->bankTransfers()->where('provider_code', $channel)->first()
+            : \App\Models\PaymentAccount::active()->bankTransfers()->first();
 
         $payload = [
-            'amount'  => $amount,
-            'bank'    => $channel,
+            'amount' => $amount,
+            'bank'   => $channel ?? $dbAccount?->provider_code,
         ];
 
-        if ($info && ! empty($info['account_number'])) {
-            $payload['account_number'] = $info['account_number'];
-            $payload['note']           = "Transfer ke rekening {$info['label']} nomor {$info['account_number']}";
+        if ($dbAccount) {
+            $payload['account_number'] = $dbAccount->account_number;
+            $payload['account_name']   = $dbAccount->account_name;
+            $payload['instructions']   = $dbAccount->instructions;
+            $payload['note']           = "Transfer ke rekening {$dbAccount->name} nomor {$dbAccount->account_number} a.n {$dbAccount->account_name}";
         } else {
-            $payload['note'] = 'Konfirmasi transfer bank ke kasir setelah berhasil';
+            $vas = config('payment.virtual_accounts', []);
+            $info = $vas[$channel] ?? null;
+
+            if ($info && ! empty($info['account_number'])) {
+                $payload['account_number'] = $info['account_number'];
+                $payload['note']           = "Transfer ke rekening {$info['label']} nomor {$info['account_number']}";
+            } else {
+                $payload['note'] = 'Konfirmasi transfer bank ke kasir setelah berhasil';
+            }
         }
 
         return [

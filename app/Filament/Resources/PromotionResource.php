@@ -25,6 +25,13 @@ class PromotionResource extends Resource
 
     protected static ?int $navigationSort = 1;
 
+    public static function canAccess(): bool
+    {
+        $user = auth()->user();
+
+        return $user && $user->hasAnyRole(['admin', 'owner']);
+    }
+
     public static function form(Form $form): Form
     {
         return $form

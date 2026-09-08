@@ -36,6 +36,10 @@ class PromotionService
             return null;
         }
 
+        if ($user && $user->is_guest) {
+            throw new PromotionException('Promo dan voucher hanya berlaku untuk akun Member terdaftar.');
+        }
+
         /** @var Promotion|null $promotion */
         $promotion = Promotion::query()
             ->whereRaw('upper(code) = ?', [$normalizedCode])

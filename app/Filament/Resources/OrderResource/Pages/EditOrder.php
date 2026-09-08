@@ -25,6 +25,13 @@ class EditOrder extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('print_kitchen')
+                ->label('Tiket Dapur')
+                ->icon('heroicon-o-fire')
+                ->color('gray')
+                ->url(fn (): string => route('orders.print.kitchen', ['order' => $this->record]))
+                ->openUrlInNewTab(),
+
             Actions\DeleteAction::make(),
         ];
     }

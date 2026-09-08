@@ -106,7 +106,7 @@
             document.body.appendChild(tab);
         }
 
-        if (pinned) {
+        if (pinned || window.innerWidth < 1024) {
             tab.style.display = 'none';
             return;
         } else {
@@ -255,6 +255,7 @@
 
     // Wire Livewire SPA navigation
     document.addEventListener('livewire:navigated', onPageLoad);
+    window.addEventListener('resize', renderTabButton);
 
     // Run initial setup
     if (document.readyState !== 'loading') {

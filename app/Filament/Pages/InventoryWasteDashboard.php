@@ -26,6 +26,13 @@ class InventoryWasteDashboard extends Page
 
     protected static ?string $title = 'Laporan Persediaan & Waste';
 
+    public static function canAccess(): bool
+    {
+        $user = auth()->user();
+
+        return Feature::enabled('inventory_waste') && $user && $user->hasAnyRole(['admin', 'owner']);
+    }
+
     public ?array $data = [];
 
     public array $summary = [];

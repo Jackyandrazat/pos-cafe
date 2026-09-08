@@ -12,6 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\ExportBulkAction;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 
 class ShiftResource extends Resource
@@ -28,13 +29,11 @@ class ShiftResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Select::make('user_id')
-                    ->label('Kasir')
+                    ->label('Pegawai / Kasir')
                     ->default(fn () => Auth::id())
-                    ->relationship('user', 'name', function ($query) {
-                        return $query->whereHas('roles', function ($q) {
-                            $q->whereIn('name', ['kasir', 'admin']);
-                        });
-                    })
+                    ->relationship('user', 'name', fn (Builder $query) => $query->staff())
+                    ->searchable()
+                    ->preload()
                     ->required(),
 
                 Forms\Components\DateTimePicker::make('shift_open_time')
@@ -99,26 +98,50 @@ class ShiftResource extends Resource
                     ->money('IDR')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('payments.sum')
+                Tables\Columns\TextColumn::make('total_sales')
                     ->label('Total Penjualan')
                     ->money('IDR')
-                    ->getStateUsing(fn ($record) => $record->payments->sum('amount_paid'))
+                    ->getStateUsing(fn ($record) => $record->total_sales ?? $record->payments->sum('amount_paid'))
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
-                    ->sortable(),
+                    ->badge()
+                    ->getStateUsing(fn (Shift $record) => $record->shift_close_time === null ? 'open' : 'closed')
+                    ->formatStateUsing(fn (string $state) => match ($state) {
+                        'open'   => 'Buka (Aktif)',
+                        'closed' => 'Selesai (Tutup)',
+                        default  => $state,
+                    })
+                    ->color(fn (string $state): string => match ($state) {
+                        'open'   => 'success',
+                        'closed' => 'gray',
+                        default  => 'gray',
+                    })
+                    ->sortable(query: function (Builder $query, string $direction): Builder {
+                        return $query->orderBy('shift_close_time', $direction === 'asc' ? 'desc' : 'asc');
+                    }),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('user_id')
-                    ->label('Kasir')
-                    ->options(User::all()->pluck('name', 'id')->toArray()),
+                    ->label('Pegawai / Kasir')
+                    ->relationship('user', 'name', fn (Builder $query) => $query->staff())
+                    ->searchable()
+                    ->preload(),
+
                 Tables\Filters\SelectFilter::make('status')
-                    ->label('Status')
+                    ->label('Status Shift')
                     ->options([
-                        'open' => 'Open',
-                        'closed' => 'Closed',
-                    ]),
+                        'open'   => 'Buka (Aktif)',
+                        'closed' => 'Selesai (Tutup)',
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return match ($data['value'] ?? null) {
+                            'open'   => $query->whereNull('shift_close_time'),
+                            'closed' => $query->whereNotNull('shift_close_time'),
+                            default  => $query,
+                        };
+                    }),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

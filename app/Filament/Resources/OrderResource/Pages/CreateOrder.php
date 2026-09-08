@@ -26,6 +26,32 @@ class CreateOrder extends CreateRecord
 
     protected ?array $pendingGiftCardRedemption = null;
 
+    public function mount(): void
+    {
+        parent::mount();
+
+        $tableId = request()->query('table_id');
+        $customerName = request()->query('customer_name');
+
+        if ($tableId || $customerName) {
+            $currentState = $this->form->getState();
+            $fillData = [];
+
+            if ($tableId) {
+                $fillData['table_id'] = (int) $tableId;
+                $fillData['order_type'] = 'dine_in';
+            }
+
+            if ($customerName && empty($currentState['customer_name'])) {
+                $fillData['customer_name'] = $customerName;
+            }
+
+            if (!empty($fillData)) {
+                $this->form->fill(array_merge($currentState, $fillData));
+            }
+        }
+    }
+
     protected function beforeCreate(): void
     {
         $data = $this->form->getState();

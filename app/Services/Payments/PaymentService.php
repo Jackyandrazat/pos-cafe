@@ -35,11 +35,30 @@ class PaymentService
         $this->validateAmount($order, $method, $amount);
 
         return DB::transaction(function () use ($order, $method, $channel, $amount, $shiftId) {
-            if ($method === 'cash') {
-                return $this->processCash($order, $amount, $shiftId);
+            $lockedOrder = Order::where('id', $order->id)->lockForUpdate()->first() ?? $order;
+            $this->validateOrder($lockedOrder);
+
+            // Cek apakah sudah ada pembayaran pending untuk order ini (Idempotency Guard)
+            $existingPending = $lockedOrder->payments()
+                ->where('status', PaymentStatus::Pending->value)
+                ->latest()
+                ->first();
+
+            if ($existingPending) {
+                // Jika metode & channel pembayaran sama, kembalikan pembayaran pending yang sudah ada
+                if ($existingPending->payment_method === $method && (string) $existingPending->payment_channel === (string) $channel) {
+                    return $existingPending;
+                }
+
+                // Jika pelanggan berganti metode pembayaran, hapus pembayaran pending yang lama
+                $existingPending->delete();
             }
 
-            return $this->processDigital($order, $method, $channel, $amount, $shiftId);
+            if ($method === 'cash') {
+                return $this->processCash($lockedOrder, $amount, $shiftId);
+            }
+
+            return $this->processDigital($lockedOrder, $method, $channel, $amount, $shiftId);
         });
     }
 
@@ -82,7 +101,8 @@ class PaymentService
         $result = $this->gatewayManager->handleWebhook($payload);
 
         DB::transaction(function () use ($result) {
-            $payment = Payment::where('external_reference', $result['reference'])
+            $payment = Payment::query()
+                ->where('external_reference', $result['reference'])
                 ->lockForUpdate()
                 ->first();
 
@@ -210,9 +230,10 @@ class PaymentService
             throw new \DomainException('Tidak bisa memproses pembayaran untuk order yang dibatalkan.');
         }
 
-        // Hanya izinkan pembayaran untuk order yang sudah di-submit atau open
+        // Hanya izinkan pembayaran untuk order yang sudah di-submit, draft (dengan item), atau open
         $allowedStatuses = [
             'open',
+            OrderStatus::Draft->value,
             OrderStatus::Pending->value,
             OrderStatus::Submitted->value,
             OrderStatus::Confirmed->value,
@@ -224,6 +245,10 @@ class PaymentService
                 'Order belum siap untuk dibayar. Status saat ini: ' . $order->status
                 . '. Order harus di-submit terlebih dahulu.'
             );
+        }
+
+        if ($order->status === OrderStatus::Draft->value && $order->items()->count() === 0) {
+            throw new \DomainException('Tidak bisa membayar order yang belum memiliki item.');
         }
 
         $due = $this->getAmountDue($order);
@@ -239,6 +264,10 @@ class PaymentService
         // Cash boleh lebih (ada kembalian), metode lain tidak
         if ($method !== 'cash' && $amount > $due) {
             throw new \DomainException('Jumlah pembayaran melebihi sisa tagihan.');
+        }
+
+        if ($method === 'cash' && $amount < $due) {
+            throw new \DomainException('Uang tunai yang diterima kurang dari total tagihan (Rp ' . number_format($due, 0, ',', '.') . ').');
         }
     }
 

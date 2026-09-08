@@ -105,6 +105,31 @@ class TableResource extends Resource
                     ->sortable(),
             ])
             ->actions([
+                Tables\Actions\Action::make('qr_code')
+                    ->label('QR Meja')
+                    ->icon('heroicon-o-qr-code')
+                    ->color('warning')
+                    ->modalHeading(fn (TableModel $record) => "QR Code Meja {$record->table_number}")
+                    ->modalDescription(fn (TableModel $record) => "Scan kode QR ini untuk memesan mandiri di Meja {$record->table_number}.")
+                    ->modalContent(function (TableModel $record) {
+                        $qrService = app(\App\Services\TableQrService::class);
+                        $card = $qrService->getTableCardData($record, 220);
+                        return view('filament.tables.actions.qr-modal', ['card' => $card]);
+                    })
+                    ->modalSubmitAction(false)
+                    ->extraModalActions([
+                        Tables\Actions\Action::make('print')
+                            ->label('Cetak Kartu Meja')
+                            ->icon('heroicon-o-printer')
+                            ->color('primary')
+                            ->url(fn (TableModel $record): string => route('tables.qr.print', ['table' => $record]))
+                            ->openUrlInNewTab(),
+                        Tables\Actions\Action::make('download')
+                            ->label('Download SVG')
+                            ->icon('heroicon-o-arrow-down-tray')
+                            ->color('gray')
+                            ->url(fn (TableModel $record): string => route('tables.qr.download', ['table' => $record])),
+                    ]),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])

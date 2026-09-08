@@ -23,6 +23,13 @@ class CustomerResource extends Resource
 
     protected static ?string $navigationGroup = 'Customers';
 
+    public static function canAccess(): bool
+    {
+        $user = auth()->user();
+
+        return $user && $user->hasAnyRole(['admin', 'owner', 'kasir']);
+    }
+
     public static function form(Form $form): Form
     {
         return $form

@@ -2,22 +2,49 @@
     use App\Filament\Resources\OrderResource;
     use Illuminate\Support\Number;
 
-    $statusStyles = [
-        'open' => 'border-amber-200 bg-amber-50 text-amber-850 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300',
-        'completed' => 'border-emerald-200 bg-emerald-50 text-emerald-850 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300',
-        'cancelled' => 'border-rose-200 bg-rose-50 text-rose-850 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300',
+    $statusClass = [
+        'draft' => 'pos-status-draft',
+        'pending' => 'pos-status-pending',
+        'open' => 'pos-status-open',
+        'submitted' => 'pos-status-submitted',
+        'confirmed' => 'pos-status-confirmed',
+        'preparing' => 'pos-status-preparing',
+        'ready' => 'pos-status-ready',
+        'payment' => 'pos-status-payment',
+        'completed' => 'pos-status-completed',
+        'cancelled' => 'pos-status-cancelled',
     ];
 
-    $statusAccent = [
-        'open' => 'border-l-amber-400 dark:border-l-amber-500',
-        'completed' => 'border-l-emerald-400 dark:border-l-emerald-500',
-        'cancelled' => 'border-l-rose-400 dark:border-l-rose-500',
+    $accentClass = [
+        'draft' => 'pos-accent-draft',
+        'pending' => 'pos-accent-pending',
+        'open' => 'pos-accent-open',
+        'submitted' => 'pos-accent-submitted',
+        'confirmed' => 'pos-accent-confirmed',
+        'preparing' => 'pos-accent-preparing',
+        'ready' => 'pos-accent-ready',
+        'payment' => 'pos-accent-payment',
+        'completed' => 'pos-accent-completed',
+        'cancelled' => 'pos-accent-cancelled',
     ];
 
-    $orderTypeBadge = [
-        'dine_in' => 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400',
-        'take_away' => 'bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400',
-        'delivery' => 'bg-teal-50 dark:bg-teal-500/10 text-teal-600 dark:text-teal-400',
+    $dotClass = [
+        'draft' => 'pos-dot-draft',
+        'pending' => 'pos-dot-pending',
+        'open' => 'pos-dot-open',
+        'submitted' => 'pos-dot-submitted',
+        'confirmed' => 'pos-dot-confirmed',
+        'preparing' => 'pos-dot-preparing',
+        'ready' => 'pos-dot-ready',
+        'payment' => 'pos-dot-payment',
+        'completed' => 'pos-dot-completed',
+        'cancelled' => 'pos-dot-cancelled',
+    ];
+
+    $orderTypeClass = [
+        'dine_in' => 'pos-type-dine_in',
+        'take_away' => 'pos-type-take_away',
+        'delivery' => 'pos-type-delivery',
     ];
 
     $orderTypeIcons = [
@@ -29,6 +56,7 @@
 
 <x-filament-panels::page
     @class([
+
         'fi-resource-list-records-page',
         'fi-resource-' . str_replace('/', '-', $this->getResource()::getSlug()),
     ])
@@ -38,19 +66,28 @@
 
         <!-- Top Control Bar (View Mode Switcher) -->
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div class="text-sm text-slate-500 dark:text-slate-400 font-medium">
-                {{ __('Pilih tampilan daftar order yang paling nyaman untuk alur kerja Anda.') }}
+            <div class="flex items-center gap-3 flex-wrap">
+                <div class="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                    {{ __('Pilih tampilan daftar order yang paling nyaman untuk alur kerja Anda.') }}
+                </div>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 shadow-xs">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    Live Sync (4s)
+                </span>
             </div>
 
-            <div class="inline-flex rounded-2xl border border-gray-200/80 dark:border-white/10 bg-gray-150/70 dark:bg-white/5 p-1 text-sm font-semibold text-slate-700 dark:text-white/70 self-start sm:self-auto shadow-inner">
+            <div class="inline-flex rounded-2xl border border-gray-200/80 dark:border-white/10 bg-gray-100 dark:bg-white/5 p-1 text-sm font-semibold text-gray-700 dark:text-white/70 self-start sm:self-auto shadow-inner">
                 <button
                     type="button"
                     wire:click="setViewMode('list')"
                     wire:loading.attr="disabled"
                     @class([
                         'flex items-center gap-2 rounded-xl px-4 py-2 transition-all duration-200 font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500',
-                        'bg-white dark:bg-gray-800 text-slate-900 dark:text-white shadow-md shadow-gray-250/20 dark:shadow-none scale-[1.02]' => $viewMode === 'list',
-                        'opacity-70 hover:opacity-100 hover:scale-[1.02] active:scale-[0.98]' => $viewMode !== 'list',
+                        'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-md' => $viewMode === 'list',
+                        'opacity-70 hover:opacity-100' => $viewMode !== 'list',
                     ])
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="w-4 h-4">
@@ -65,8 +102,8 @@
                     wire:loading.attr="disabled"
                     @class([
                         'flex items-center gap-2 rounded-xl px-4 py-2 transition-all duration-200 font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500',
-                        'bg-white dark:bg-gray-800 text-slate-900 dark:text-white shadow-md shadow-gray-250/20 dark:shadow-none scale-[1.02]' => $viewMode === 'card',
-                        'opacity-70 hover:opacity-100 hover:scale-[1.02] active:scale-[0.98]' => $viewMode !== 'card',
+                        'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-md' => $viewMode === 'card',
+                        'opacity-70 hover:opacity-100' => $viewMode !== 'card',
                     ])
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="w-4 h-4">
@@ -84,18 +121,18 @@
 
             {{ \Filament\Support\Facades\FilamentView::renderHook(\Filament\View\PanelsRenderHook::RESOURCE_PAGES_LIST_RECORDS_TABLE_AFTER, scopes: $this->getRenderHookScopes()) }}
         @else
-            <div class="space-y-6">
+            <div class="space-y-6" wire:poll.4s>
                 <!-- Search & Filters -->
-                <div class="flex flex-col gap-4 rounded-2xl border border-gray-200/60 dark:border-white/[.06] bg-white dark:bg-gray-900 p-4 sm:p-5 shadow-sm dark:shadow-none md:flex-row md:items-center md:justify-between">
+                <div class="flex flex-col gap-4 rounded-2xl border border-gray-200/80 dark:border-white/[.06] bg-white dark:bg-gray-900 p-4 sm:p-5 shadow-sm dark:shadow-none md:flex-row md:items-center md:justify-between">
                     <div class="space-y-0.5">
-                        <h3 class="font-bold text-slate-800 dark:text-white text-sm">{{ __('Pencarian & Filter') }}</h3>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">
+                        <h3 class="font-bold text-gray-800 dark:text-white text-sm">{{ __('Pencarian & Filter') }}</h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
                             {{ __('Ketik nama pelanggan, nomor meja, menu, atau status untuk menyaring daftar.') }}
                         </p>
                     </div>
 
                     <div class="relative w-full md:w-80">
-                        <span class="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-slate-400 dark:text-white/40">
+                        <span class="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-gray-400">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="w-4 h-4">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.602 10.602Z" />
                             </svg>
@@ -104,13 +141,13 @@
                             type="text"
                             wire:model.live.debounce.400ms="cardSearch"
                             placeholder="{{ __('Cari order...') }}"
-                            class="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/[.03] py-2.5 pl-10 pr-10 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20 transition-all duration-200"
+                            class="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/[.03] py-2.5 pl-10 pr-10 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20 transition-all duration-200"
                         >
                         @if ($cardSearch !== '')
                             <button
                                 type="button"
                                 wire:click="$set('cardSearch', '')"
-                                class="absolute inset-y-0 right-3 flex items-center text-slate-400 dark:text-white/40 transition hover:text-slate-600 dark:hover:text-white/80"
+                                class="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-white/80"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="w-4 h-4">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -121,63 +158,65 @@
                 </div>
 
                 <!-- Cards Grid -->
-                <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+                <div class="pos-card-grid">
                     @forelse ($this->cardOrders as $order)
                         @php
                             $menuItems = ($order->order_items ?? collect());
                             $menuCount = $menuItems->count();
-                            $previewLimit = 2;
+                            $previewLimit = 3;
                             $previewItems = $menuCount > $previewLimit ? $menuItems->take($previewLimit) : $menuItems;
-                            $accent = $statusAccent[$order->status] ?? 'border-l-gray-300 dark:border-l-gray-600';
-                            $typeBadgeClass = $orderTypeBadge[$order->order_type] ?? 'bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-gray-400';
                             $typeIcon = $orderTypeIcons[$order->order_type] ?? null;
+                            $isPulsing = in_array($order->status, ['open', 'pending', 'preparing', 'ready']);
                         @endphp
 
-                        <article
-                            class="group relative flex h-full flex-col rounded-xl border border-gray-200/70 dark:border-white/[.06] border-l-[3px] {{ $accent }} bg-white dark:bg-gray-900 shadow-sm hover:shadow-md dark:shadow-none dark:hover:shadow-[0_8px_24px_rgba(0,0,0,0.3)] hover:-translate-y-0.5 transition-all duration-200 ease-out overflow-hidden"
-                        >
-                            <div class="flex flex-1 flex-col p-4 pb-0">
-                                <!-- Header: Customer & Status -->
-                                <div class="flex items-start justify-between gap-2 mb-3">
-                                    <div class="min-w-0">
-                                        <h2 class="text-sm font-bold text-slate-900 dark:text-white truncate leading-snug" title="{{ $order->customer_name ?: __('Tamu') }}">
-                                            {{ $order->customer_name ?: __('Tamu') }}
-                                        </h2>
-                                        <div class="flex items-center gap-1.5 mt-1">
-                                            <span class="font-mono text-[10px] text-slate-400 dark:text-slate-500 font-semibold">#{{ $order->id }}</span>
-                                            <span class="text-slate-300 dark:text-slate-700 text-[10px]">·</span>
-                                            <span class="text-[10px] text-slate-400 dark:text-slate-500 font-medium flex items-center gap-1">
-                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-2.5 h-2.5">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                                                </svg>
-                                                {{ optional($order->created_at)->timezone(config('app.timezone'))->translatedFormat('H:i') }}
-                                            </span>
-                                        </div>
+                        <article class="pos-order-card">
+                            <!-- Top Status Accent Stripe -->
+                            <div class="pos-accent-stripe {{ $accentClass[$order->status] ?? 'pos-accent-draft' }}"></div>
+
+                            <div class="flex flex-1 flex-col p-4 pb-3">
+                                <!-- Top Bar: Ticket #, Time, Status Badge -->
+                                <div class="flex items-center justify-between gap-2 mb-3">
+                                    <div class="flex items-center gap-2">
+                                        <span class="pos-ticket-token">
+                                            #{{ $order->id }}
+                                        </span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400 font-medium flex items-center gap-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5 text-gray-400">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                            </svg>
+                                            {{ optional($order->created_at)->timezone(config('app.timezone'))->translatedFormat('H:i') }}
+                                        </span>
                                     </div>
 
-                                    <span @class([
-                                        'inline-flex items-center gap-1 shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide',
-                                        $statusStyles[$order->status] ?? 'border-gray-200 bg-gray-100 text-gray-700 dark:border-white/20 dark:bg-white/10 dark:text-white/80',
-                                    ])>
-                                        @if($order->status === 'open')
-                                            <span class="relative flex h-1.5 w-1.5">
-                                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                                                <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
+                                    <!-- Status Badge -->
+                                    <span class="pos-status-badge {{ $statusClass[$order->status] ?? 'pos-status-draft' }}">
+                                        @if($isPulsing)
+                                            <span class="relative flex h-2 w-2">
+                                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 {{ $dotClass[$order->status] ?? 'pos-dot-draft' }}"></span>
+                                                <span class="relative inline-flex rounded-full h-2 w-2 {{ $dotClass[$order->status] ?? 'pos-dot-draft' }}"></span>
                                             </span>
-                                        @elseif($order->status === 'completed')
-                                            <span class="relative flex h-1.5 w-1.5">
-                                                <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
-                                            </span>
+                                        @else
+                                            <span class="inline-flex rounded-full h-2 w-2 {{ $dotClass[$order->status] ?? 'pos-dot-draft' }}"></span>
                                         @endif
                                         {{ __('orders.status.' . ($order->status ?? 'unknown')) }}
                                     </span>
                                 </div>
 
-                                <!-- Order Type Badge -->
-                                <div class="flex items-center gap-1.5 mb-3">
-                                    <span class="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold {{ $typeBadgeClass }}">
+                                <!-- Customer Header -->
+                                <div class="flex items-center gap-2 mb-2.5 min-w-0">
+                                    <div class="pos-customer-avatar">
+                                        {{ mb_substr($order->customer_name ?: 'T', 0, 1) }}
+                                    </div>
+                                    <h2 class="text-sm font-extrabold text-gray-900 dark:text-white truncate leading-snug" title="{{ $order->customer_name ?: __('Tamu') }}">
+                                        {{ $order->customer_name ?: __('Tamu') }}
+                                    </h2>
+                                </div>
+
+                                <!-- Service Type & Table Pills -->
+                                <div class="flex flex-wrap items-center gap-1.5 mb-3.5">
+                                    <span class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold {{ $orderTypeClass[$order->order_type] ?? 'pos-type-dine_in' }}">
                                         @if($typeIcon)
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3 h-3">{!! $typeIcon !!}</svg>
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5 shrink-0">{!! $typeIcon !!}</svg>
                                         @endif
                                         @if(in_array($order->order_type, ['dine_in', 'take_away', 'delivery']))
                                             {{ __('orders.types.' . $order->order_type) }}
@@ -185,109 +224,132 @@
                                             {{ $this->getOrderTypeLabel($order->order_type) }}
                                         @endif
                                     </span>
+
                                     @if($order->order_type === 'dine_in' && optional($order->table)->table_number)
-                                        <span class="inline-flex items-center rounded-md bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 text-[10px] font-semibold">
-                                            {{ __('Meja :number', ['number' => optional($order->table)->table_number]) }}
+                                        <span class="pos-table-badge inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
+                                                <path fill-rule="evenodd" d="M2 4.75A.75.75 0 0 1 2.75 4h14.5a.75.75 0 0 1 0 1.5H17v10.75a.75.75 0 0 1-1.5 0V5.5H4.5v10.75a.75.75 0 0 1-1.5 0V5.5H2.75A.75.75 0 0 1 2 4.75Z" clip-rule="evenodd" />
+                                            </svg>
+                                            <span>{{ __('Meja :number', ['number' => optional($order->table)->table_number]) }}</span>
                                         </span>
                                     @endif
                                 </div>
 
-                                <!-- Items List -->
-                                <div x-data="{ expanded: false }" class="flex-1">
-                                    <div class="flex items-center justify-between mb-1.5">
-                                        <span class="text-[10px] text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider">
-                                            {{ trans_choice('orders.menu_count', $menuCount, ['count' => $menuCount]) }}
-                                        </span>
+                                <!-- Receipt Items Container -->
+                                <div x-data="{ expanded: false }" class="pos-receipt-box flex-1 flex flex-col justify-between">
+                                    <div>
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider">
+                                                {{ trans_choice('orders.menu_count', $menuCount, ['count' => $menuCount]) }}
+                                            </span>
 
-                                        @if ($menuCount > $previewLimit)
-                                            <button
-                                                type="button"
-                                                class="text-[10px] font-bold text-amber-500 dark:text-amber-400 hover:text-amber-600 dark:hover:text-amber-300 focus:outline-none transition-colors"
-                                                x-on:click.stop="expanded = !expanded"
-                                            >
-                                                <span x-text="expanded ? '{{ __('Sembunyikan') }}' : '{{ __('Lihat semua') }}'"></span>
-                                            </button>
-                                        @endif
-                                    </div>
-
-                                    @if ($menuCount > 0)
-                                        <ul x-show="!expanded" class="space-y-0.5">
-                                            @foreach ($previewItems as $item)
-                                                <li
-                                                    wire:click="openOrderDetailModal({{ $order->id }})"
-                                                    class="flex cursor-pointer items-center justify-between rounded-lg px-2 py-1.5 text-[11px] text-slate-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-white/[.03] transition-colors"
-                                                    title="{{ __('Lihat detail order') }}"
+                                            @if ($menuCount > $previewLimit)
+                                                <button
+                                                    type="button"
+                                                    class="text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 focus:outline-none transition-colors"
+                                                    x-on:click.stop="expanded = !expanded"
                                                 >
-                                                    <span class="flex-1 truncate pr-2 font-medium text-slate-700 dark:text-slate-300">{{ $item->product->name ?? $item->product_name ?? 'Menu #' . $item->id }}</span>
-                                                    <span class="font-mono text-slate-400 dark:text-slate-500 text-[10px]">×{{ $item->qty ?? 0 }}</span>
-                                                </li>
-                                            @endforeach
-                                        </ul>
+                                                    <span x-text="expanded ? '{{ __('Sembunyikan') }}' : '{{ __('Lihat semua') }}'"></span>
+                                                </button>
+                                            @endif
+                                        </div>
 
-                                        @if ($menuCount > $previewLimit)
-                                            <ul
-                                                x-show="expanded"
-                                                x-cloak
-                                                class="space-y-0.5"
-                                            >
-                                                @foreach ($menuItems as $item)
+                                        @if ($menuCount > 0)
+                                            <ul x-show="!expanded" class="space-y-1.5">
+                                                @foreach ($previewItems as $item)
                                                     <li
                                                         wire:click="openOrderDetailModal({{ $order->id }})"
-                                                        class="flex cursor-pointer items-center justify-between rounded-lg px-2 py-1.5 text-[11px] text-slate-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-white/[.03] transition-colors"
-                                                        title="{{ __('Lihat detail order') }}"
+                                                        class="flex cursor-pointer items-center justify-between rounded-lg px-2 py-1 text-xs text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-white/5 transition-colors group/item"
+                                                        title="{{ __('Klik untuk lihat struk & rincian') }}"
                                                     >
-                                                        <span class="flex-1 truncate pr-2 font-medium text-slate-700 dark:text-slate-300">{{ $item->product->name ?? $item->product_name ?? 'Menu #' . $item->id }}</span>
-                                                        <span class="font-mono text-slate-400 dark:text-slate-500 text-[10px]">×{{ $item->qty ?? 0 }}</span>
+                                                        <div class="flex items-center gap-2 min-w-0 flex-1">
+                                                            <span class="pos-qty-badge">
+                                                                {{ $item->qty ?? 0 }}×
+                                                            </span>
+                                                            <span class="truncate font-medium group-hover/item:text-amber-600 dark:group-hover/item:text-amber-400 transition-colors">
+                                                                {{ $item->product->name ?? $item->product_name ?? 'Menu #' . $item->id }}
+                                                            </span>
+                                                        </div>
                                                     </li>
                                                 @endforeach
                                             </ul>
+
+                                            @if ($menuCount > $previewLimit)
+                                                <ul
+                                                    x-show="expanded"
+                                                    x-cloak
+                                                    class="space-y-1.5"
+                                                >
+                                                    @foreach ($menuItems as $item)
+                                                        <li
+                                                            wire:click="openOrderDetailModal({{ $order->id }})"
+                                                            class="flex cursor-pointer items-center justify-between rounded-lg px-2 py-1 text-xs text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-white/5 transition-colors group/item"
+                                                            title="{{ __('Klik untuk lihat struk & rincian') }}"
+                                                        >
+                                                            <div class="flex items-center gap-2 min-w-0 flex-1">
+                                                                <span class="pos-qty-badge">
+                                                                    {{ $item->qty ?? 0 }}×
+                                                                </span>
+                                                                <span class="truncate font-medium group-hover/item:text-amber-600 dark:group-hover/item:text-amber-400 transition-colors">
+                                                                    {{ $item->product->name ?? $item->product_name ?? 'Menu #' . $item->id }}
+                                                                </span>
+                                                            </div>
+                                                        </li>
+                                                    @endforeach
+                                                </ul>
+                                            @endif
+                                        @else
+                                            <p class="text-xs text-gray-400 dark:text-gray-500 italic py-1">{{ __('Belum ada menu pada order ini.') }}</p>
                                         @endif
-                                    @else
-                                        <p class="text-[10px] text-slate-400 dark:text-slate-500 italic py-1">{{ __('Belum ada menu pada order ini.') }}</p>
+                                    </div>
+
+                                    @if(optional($order->user)->name)
+                                        <div class="mt-2.5 pt-2 border-t border-gray-200 dark:border-gray-700/50 flex items-center justify-between text-[10px] text-gray-400 dark:text-gray-500">
+                                            <span>{{ __('Kasir') }}: <strong class="font-semibold text-gray-700 dark:text-gray-300">{{ optional($order->user)->name }}</strong></span>
+                                        </div>
                                     @endif
                                 </div>
                             </div>
 
+                            <!-- Ticket Tear Line (Dashed) -->
+                            <div class="relative flex items-center px-4">
+                                <div class="w-full border-t border-dashed border-gray-200 dark:border-gray-700"></div>
+                            </div>
+
                             <!-- Footer: Total & Actions -->
-                            <div class="mt-3 border-t border-gray-100 dark:border-white/[.04] bg-gray-50/50 dark:bg-white/[.02] px-4 py-3 flex items-center justify-between gap-2">
-                                <div>
-                                    <span class="text-[9px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold block leading-none mb-0.5">{{ __('Total') }}</span>
-                                    <span class="text-base font-extrabold text-slate-900 dark:text-white font-mono tracking-tight">
+                            <div class="p-4 pt-3 bg-gray-50/50 dark:bg-white/[0.01] flex items-center justify-between gap-3">
+                                <div class="min-w-0">
+                                    <span class="text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-500 font-bold block leading-none mb-1">
+                                        {{ __('Total') }}
+                                    </span>
+                                    <span class="text-base font-black text-gray-900 dark:text-white font-mono tracking-tight truncate block">
                                         {{ Number::currency($order->total_order ?? 0, 'IDR', locale: app()->getLocale()) }}
                                     </span>
                                 </div>
 
-                                <div class="flex items-center gap-1.5">
+                                <div class="flex items-center gap-2 shrink-0">
                                     <button
                                         type="button"
                                         wire:click="openOrderDetailModal({{ $order->id }})"
-                                        class="flex items-center justify-center rounded-lg text-slate-400 dark:text-slate-500 p-1.5 hover:bg-gray-100 dark:hover:bg-white/[.06] hover:text-slate-600 dark:hover:text-slate-300 transition-colors focus:outline-none"
-                                        title="{{ __('Lihat Detail') }}"
+                                        class="pos-btn-detail"
+                                        title="{{ __('Lihat Struk / Detail Transaksi') }}"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="w-4 h-4">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
                                         </svg>
                                     </button>
 
                                     <a
                                         href="{{ OrderResource::getUrl('edit', ['record' => $order]) }}"
-                                        class="inline-flex items-center gap-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold px-2.5 py-1.5 text-[11px] transition-all duration-150 focus:outline-none active:scale-[0.97]"
+                                        class="pos-btn-kelola"
                                         title="{{ __('Kelola Order') }}"
                                     >
                                         <span>{{ __('Kelola') }}</span>
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3 h-3">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
                                         </svg>
                                     </a>
                                 </div>
-                            </div>
-
-                            <!-- Cashier label on hover -->
-                            <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-                                <span class="text-[9px] text-slate-400 dark:text-slate-600 font-medium bg-white dark:bg-gray-900 px-1.5 py-0.5 rounded shadow-sm border border-gray-100 dark:border-gray-800" title="{{ __('Kasir: :name', ['name' => optional($order->user)->name ?? __('Sistem')]) }}">
-                                    {{ optional($order->user)->name ?? __('Sistem') }}
-                                </span>
                             </div>
                         </article>
                     @empty
@@ -318,43 +380,46 @@
     @if ($detailOrderId)
         @php
             $modalId = 'order-detail-modal';
-            $detailStatusStyle = $statusStyles[$detailOrderMeta['status'] ?? ''] ?? 'border-gray-200 bg-gray-100 text-gray-700';
+            $detailStatusStyle = $statusClass[$detailOrderMeta['status'] ?? ''] ?? 'pos-status-draft';
         @endphp
 
         <div
             x-data="{
-                show: @js($isDetailModalOpen),
+                show: true,
                 close() {
                     this.show = false;
                     $wire.closeOrderDetailModal();
                 }
             }"
-            x-cloak
             x-show="show"
-            x-transition:enter="transition ease-out duration-300"
+            x-on:keydown.escape.window="close()"
+            x-transition:enter="transition ease-out duration-200"
             x-transition:enter-start="opacity-0"
             x-transition:enter-end="opacity-100"
-            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave="transition ease-in duration-150"
             x-transition:leave-start="opacity-100"
             x-transition:leave-end="opacity-0"
             id="{{ $modalId }}"
-            class="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/50 dark:bg-black/70 p-2 sm:p-6 backdrop-blur-sm overflow-y-auto"
+            class="pos-modal-backdrop fixed inset-0 z-[99999] flex items-center justify-center bg-black/75 dark:bg-black/85 p-3 sm:p-6 backdrop-blur-sm overflow-y-auto"
+            style="position: fixed; inset: 0; z-index: 99999; background: rgba(0, 0, 0, 0.75); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);"
+            @click.self="close()"
         >
             <div
                 x-show="show"
-                x-transition:enter="transition ease-out duration-300"
-                x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 scale-95 translate-y-2"
                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                x-transition:leave="transition ease-in duration-200"
+                x-transition:leave="transition ease-in duration-150"
                 x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-                x-transition:leave-end="opacity-0 scale-95 translate-y-4"
-                @click.away="close()"
-                class="relative w-full max-w-md my-4 sm:my-auto font-mono"
+                x-transition:leave-end="opacity-0 scale-95 translate-y-2"
+                class="pos-modal-dialog relative w-full max-w-md my-auto font-mono"
+                style="max-width: 28rem; width: 100%; position: relative; z-index: 100000;"
             >
                 {{-- Close button (floating outside receipt) --}}
                 <button
                     type="button"
-                    class="absolute -right-2 -top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white dark:bg-gray-800 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-white shadow-lg border border-gray-200 dark:border-gray-700 transition-colors"
+                    class="absolute -right-2 -top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white dark:bg-gray-800 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white shadow-lg border border-gray-200 dark:border-gray-700 transition-colors"
+                    wire:click="closeOrderDetailModal"
                     x-on:click="close()"
                     aria-label="{{ __('Tutup') }}"
                 >
@@ -518,6 +583,7 @@
                 <div class="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-end font-sans">
                     <x-filament::button
                         color="gray"
+                        wire:click="closeOrderDetailModal"
                         x-on:click="close()"
                         size="lg"
                         class="hover:scale-[1.02] active:scale-[0.98] transition-all"

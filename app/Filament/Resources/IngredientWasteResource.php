@@ -22,6 +22,13 @@ class IngredientWasteResource extends Resource
 
     protected static ?string $navigationLabel = 'Waste Bahan';
 
+    public static function canAccess(): bool
+    {
+        $user = auth()->user();
+
+        return $user && $user->hasAnyRole(['admin', 'owner', 'kasir', 'kitchen']);
+    }
+
     public static function form(Form $form): Form
     {
         return $form

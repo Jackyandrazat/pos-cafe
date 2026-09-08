@@ -13,6 +13,14 @@ class EditPayment extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('print_receipt')
+                ->label('Cetak Struk')
+                ->icon('heroicon-o-printer')
+                ->color('primary')
+                ->visible(fn (): bool => $this->record->isCaptured() && $this->record->order !== null)
+                ->url(fn (): string => route('payments.print', ['payment' => $this->record]))
+                ->openUrlInNewTab(),
+
             Actions\DeleteAction::make(),
         ];
     }
