@@ -1,4 +1,4 @@
-# Laku POS – UAT Checklist
+# Labo By kodeeweb – UAT Checklist
 
 ## Scope & Preconditions
 - Environment mirrored to staging with latest migrations (`php artisan migrate --seed` if needed).

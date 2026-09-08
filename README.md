@@ -1,4 +1,4 @@
-# Laku POS System
+# Labo By kodeeweb System
 
 Sistem POS (Point of Sale) untuk sebuah kafe yang dibuat menggunakan **Laravel 11** dan **Filament**. Proyek ini mencakup manajemen produk, bahan baku, transaksi, pembelian bahan baku, shift kasir, laporan penjualan, dan lebih banyak lagi. Sistem ini dirancang untuk mempermudah pengelolaan operasional sehari-hari di kafe dengan fokus pada kemudahan penggunaan dan integrasi data.
 
@@ -15,7 +15,7 @@ Sistem POS (Point of Sale) untuk sebuah kafe yang dibuat menggunakan **Laravel 1
 
 ## 📋 Fitur Utama
 
-Sistem Laku POS ini dilengkapi dengan berbagai fitur untuk mendukung operasional kafe Anda:
+Sistem Labo By kodeeweb ini dilengkapi dengan berbagai fitur untuk mendukung operasional kafe Anda:
 
 * **Manajemen Produk**:
     * Fungsionalitas CRUD (Create, Read, Update, Delete) untuk produk menu.

@@ -1,6 +1,6 @@
 # Panduan Setup Payment Gateway
 
-Dokumen ini menjelaskan cara mengaktifkan integrasi dengan payment gateway populer untuk Laku POS.
+Dokumen ini menjelaskan cara mengaktifkan integrasi dengan payment gateway populer untuk Labo By kodeeweb.
 
 ---
 

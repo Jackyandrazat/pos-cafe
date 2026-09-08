@@ -16,7 +16,7 @@ class CafeInfoWidget extends Widget
     public function getViewData(): array
     {
         return [
-            'cafeName' => 'Laku POS Maju Mundur Cantik',
+            'cafeName' => 'Labo By kodeeweb Maju Mundur Cantik',
             'version' => 'v1.2.0',
             'developer' => 'kodeeweb.com',
             'buildDate' => '2026',
