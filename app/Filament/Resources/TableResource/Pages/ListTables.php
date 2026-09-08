@@ -13,6 +13,12 @@ class ListTables extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('print_all_qr')
+                ->label('Cetak Semua QR Meja')
+                ->icon('heroicon-o-printer')
+                ->color('warning')
+                ->url(fn (): string => route('tables.qr.print-all'))
+                ->openUrlInNewTab(),
             Actions\CreateAction::make(),
         ];
     }

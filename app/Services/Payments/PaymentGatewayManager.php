@@ -19,6 +19,14 @@ class PaymentGatewayManager
      */
     protected function resolveGateway(string $mode): PaymentGatewayInterface
     {
+        // Guard: sandbox tidak boleh digunakan di production
+        if ($mode === 'sandbox' && app()->environment('production')) {
+            throw new \RuntimeException(
+                'PAYMENT_MODE=sandbox tidak boleh digunakan di environment production. '
+                . 'Gunakan manual, midtrans, atau doku.'
+            );
+        }
+
         return match ($mode) {
             'manual'   => app(ManualGateway::class),
             'midtrans' => new MidtransGateway(),

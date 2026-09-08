@@ -25,7 +25,7 @@ enum OrderStatus: string
             self::Draft => 'Draft',
             self::Pending => 'Pending',
             self::Submitted => 'Submitted',
-            self::Payment => 'Payment',
+            self::Payment => 'Sudah Dibayar',
             self::Confirmed => 'Confirmed',
             self::Preparing => 'Preparing',
             self::Ready => 'Ready',

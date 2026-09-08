@@ -31,4 +31,8 @@ return [
         ],
     ],
 
+    'order_hub' => [
+        'url' => env('ORDER_HUB_URL', 'http://localhost:5173'),
+    ],
+
 ];

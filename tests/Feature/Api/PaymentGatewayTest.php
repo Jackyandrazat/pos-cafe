@@ -225,4 +225,73 @@ class PaymentGatewayTest extends TestCase
 
         $response->assertUnprocessable();
     }
+
+    public function test_repeated_payment_submission_returns_existing_pending_payment_without_creating_duplicates(): void
+    {
+        config(['payment.mode' => 'manual']);
+
+        $user  = User::factory()->create();
+        $order = Order::factory()->create(['user_id' => $user->id, 'total_order' => 20000]);
+
+        Sanctum::actingAs($user);
+
+        // First click/request
+        $first = $this->postJson("/api/v1/orders/{$order->id}/payments", [
+            'payment_method' => 'qris',
+            'amount'         => 20000,
+        ]);
+        $first->assertCreated();
+        $firstPaymentId = $first->json('data.id');
+
+        // Repeated clicks/requests
+        $second = $this->postJson("/api/v1/orders/{$order->id}/payments", [
+            'payment_method' => 'qris',
+            'amount'         => 20000,
+        ]);
+        $second->assertCreated();
+        $secondPaymentId = $second->json('data.id');
+
+        // Should return the exact same payment record
+        $this->assertEquals($firstPaymentId, $secondPaymentId);
+
+        // Database should only have 1 payment record
+        $this->assertDatabaseCount('payments', 1);
+    }
+
+    public function test_cancelling_pending_payment_deletes_record_and_allows_switching_method(): void
+    {
+        config(['payment.mode' => 'manual']);
+
+        $user  = User::factory()->create();
+        $order = Order::factory()->create(['user_id' => $user->id, 'total_order' => 20000]);
+
+        Sanctum::actingAs($user);
+
+        // Create pending QRIS payment
+        $response = $this->postJson("/api/v1/orders/{$order->id}/payments", [
+            'payment_method' => 'qris',
+            'amount'         => 20000,
+        ]);
+        $response->assertCreated();
+        $this->assertDatabaseCount('payments', 1);
+
+        // Cancel pending payment
+        $del = $this->deleteJson("/api/v1/orders/{$order->id}/payments/pending");
+        $del->assertOk()
+            ->assertJsonPath('success', true);
+
+        // Database should now have 0 payments
+        $this->assertDatabaseCount('payments', 0);
+
+        // Now user can create a different payment (e.g. transfer)
+        $transfer = $this->postJson("/api/v1/orders/{$order->id}/payments", [
+            'payment_method'  => 'transfer',
+            'payment_channel' => 'bca',
+            'amount'          => 20000,
+        ]);
+        $transfer->assertCreated()
+            ->assertJsonPath('data.payment_method', 'transfer');
+
+        $this->assertDatabaseCount('payments', 1);
+    }
 }

@@ -91,9 +91,54 @@ class PaymentController extends Controller
         return new PaymentResource($payment);
     }
 
+    /**
+     * Batalkan dan hapus seluruh pembayaran berstatus pending untuk order ini (untuk ganti metode pembayaran).
+     *
+     * DELETE /orders/{order}/payments/pending
+     */
+    public function cancelPending(Request $request, Order $order): JsonResponse
+    {
+        $this->ensureOrderOwner($request->user(), $order);
+
+        $deletedCount = $order->payments()
+            ->where('status', PaymentStatus::Pending->value)
+            ->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pembayaran pending berhasil dihapus.',
+            'deleted_count' => $deletedCount,
+        ]);
+    }
+
+    /**
+     * Hapus pembayaran spesifik jika masih berstatus pending.
+     *
+     * DELETE /orders/{order}/payments/{payment}
+     */
+    public function destroy(Request $request, Order $order, Payment $payment): JsonResponse
+    {
+        $this->ensureOrderOwner($request->user(), $order);
+
+        if ($payment->order_id !== $order->id) {
+            abort(Response::HTTP_NOT_FOUND, 'Pembayaran tidak ditemukan di order ini.');
+        }
+
+        if ($payment->status !== PaymentStatus::Pending->value) {
+            abort(Response::HTTP_UNPROCESSABLE_ENTITY, 'Hanya pembayaran dengan status pending yang dapat dihapus.');
+        }
+
+        $payment->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pembayaran berhasil dihapus.',
+        ]);
+    }
+
     protected function ensureOrderOwner($user, Order $order): void
     {
-        if ($order->user_id !== $user->id) {
+        if ($order->user_id !== $user->id && ! $user->hasAnyRole(['admin', 'kasir', 'owner'])) {
             abort(Response::HTTP_FORBIDDEN, 'Anda tidak memiliki akses ke order ini.');
         }
     }

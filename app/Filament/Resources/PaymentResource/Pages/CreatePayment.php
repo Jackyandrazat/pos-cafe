@@ -5,6 +5,7 @@ namespace App\Filament\Resources\PaymentResource\Pages;
 use App\Models\Order;
 use App\Models\User;
 use App\Services\Payments\PaymentService;
+use Filament\Notifications\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use App\Filament\Resources\PaymentResource;
@@ -15,6 +16,20 @@ use Illuminate\Validation\ValidationException;
 class CreatePayment extends CreateRecord
 {
     protected static string $resource = PaymentResource::class;
+
+    public function mount(): void
+    {
+        parent::mount();
+
+        $orderId = request()->query('order_id');
+        if ($orderId && $order = Order::find($orderId)) {
+            $this->form->fill([
+                'order_id'       => (int) $order->id,
+                'amount_paid'    => (float) $order->total_order,
+                'payment_method' => 'cash',
+            ]);
+        }
+    }
 
     /**
      * Validasi awal + siapkan data shift sebelum create.
@@ -99,10 +114,27 @@ class CreatePayment extends CreateRecord
     }
 
     /**
-     * Override notifikasi sukses dengan label Bahasa Indonesia.
+     * Override notifikasi sukses dengan aksi cetak struk thermal instan.
      */
-    protected function getCreatedNotificationTitle(): ?string
+    protected function getCreatedNotification(): ?Notification
     {
-        return 'Pembayaran berhasil dibuat';
+        $change = $this->record->change_return;
+        $body   = 'Nominal Rp ' . number_format($this->record->amount_paid, 0, ',', '.') . ' (' . strtoupper($this->record->payment_method) . ').';
+        if ($this->record->payment_method === 'cash') {
+            $body .= ' Kembalian: Rp ' . number_format($change, 0, ',', '.');
+        }
+
+        return Notification::make()
+            ->success()
+            ->title('Pembayaran Berhasil')
+            ->body($body)
+            ->actions([
+                Action::make('print_receipt')
+                    ->label('🖨️ Cetak Struk')
+                    ->button()
+                    ->color('success')
+                    ->url(route('payments.print', ['payment' => $this->record]))
+                    ->openUrlInNewTab(),
+            ]);
     }
 }

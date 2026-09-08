@@ -17,7 +17,7 @@ class CustomerLoyaltyController extends Controller
 {
     public function summary(Request $request, Customer $customer): CustomerLoyaltySummaryResource
     {
-        $this->ensureModuleEnabled();
+        $this->ensureMemberAccess($request, $customer);
 
         $customer->loadCount('orders');
         $customer->load(['challengeAwards' => fn ($query) => $query->latest('awarded_at')->with('challenge')->take(5)]);
@@ -45,8 +45,10 @@ class CustomerLoyaltyController extends Controller
         ]);
     }
 
-    public function challenges(Customer $customer)
+    public function challenges(Request $request, Customer $customer)
     {
+        $this->ensureMemberAccess($request, $customer);
+
         $challenges = LoyaltyChallenge::active()
             ->with([
                 'progresses' => fn ($q) =>
@@ -60,8 +62,10 @@ class CustomerLoyaltyController extends Controller
         ]);
     }
 
-    public function transactions(Customer $customer)
+    public function transactions(Request $request, Customer $customer)
     {
+        $this->ensureMemberAccess($request, $customer);
+
         return response()->json([
             'data' => CustomerPointTransaction::where('customer_id', $customer->id)
                 ->latest()
@@ -77,9 +81,9 @@ class CustomerLoyaltyController extends Controller
         ]);
     }
 
-    public function rewards(Customer $customer)
+    public function rewards(Request $request, Customer $customer)
     {
-        $this->ensureModuleEnabled();
+        $this->ensureMemberAccess($request, $customer);
 
         $awards = $customer->challengeAwards()
             ->with('challenge')
@@ -102,6 +106,21 @@ class CustomerLoyaltyController extends Controller
                 'is_available' => true,
             ])
         ]);
+    }
+
+    protected function ensureMemberAccess(Request $request, Customer $customer): void
+    {
+        $this->ensureModuleEnabled();
+
+        $user = $request->user();
+        if (! $user || $user->is_guest) {
+            abort(Response::HTTP_FORBIDDEN, 'Fitur loyalti hanya tersedia untuk Member terdaftar.');
+        }
+
+        $isStaff = $user->hasAnyRole(['admin', 'kasir', 'manajer', 'supervisor', 'barista', 'kitchen']);
+        if (! $isStaff && (int) $user->customer_id !== (int) $customer->id) {
+            abort(Response::HTTP_FORBIDDEN, 'Akses loyalti tidak sah.');
+        }
     }
 
     protected function ensureModuleEnabled(): void

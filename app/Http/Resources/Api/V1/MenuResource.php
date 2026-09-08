@@ -26,7 +26,7 @@ class MenuResource extends JsonResource
                 'id' => (string) $category->id,
                 'name' => $category->name,
             ] : null,
-            'is_available' => (bool) $this->status_enabled,
+            'is_available' => (bool) ($this->status_enabled && $this->hasSufficientStock(1)),
             'image_url' => $this->getFirstMediaUrl('product'),
             'thumbnail_url' => $this->getFirstMediaUrl('product', 'thumb'),
             'modifiers' => [],

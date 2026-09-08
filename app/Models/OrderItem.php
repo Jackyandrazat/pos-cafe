@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\OrderItemTopping> $toppings
+ * @mixin \Illuminate\Database\Eloquent\Builder
  */
-
 class OrderItem extends Model
 {
     use HasFactory;

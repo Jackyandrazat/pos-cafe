@@ -14,16 +14,25 @@ class OrderStatusController extends Controller
 {
     public function show(Request $request, Order $order): OrderStatusResource
     {
-        if ($order->user_id !== $request->user()->id) {
+        $user = $request->user();
+        $isStaff = method_exists($user, 'hasAnyRole') && $user->hasAnyRole(['admin', 'cashier', 'super_admin']);
+        if ($order->user_id !== $user->id && ! $isStaff) {
             abort(Response::HTTP_FORBIDDEN, 'You do not have access to this order.');
         }
 
         return new OrderStatusResource($order->load('statusLogs'));
     }
-    public function timeline(Order $order)
+
+    public function timeline(Request $request, Order $order)
     {
+        $user = $request->user();
+        $isStaff = method_exists($user, 'hasAnyRole') && $user->hasAnyRole(['admin', 'cashier', 'super_admin']);
+        if ($order->user_id !== $user->id && ! $isStaff) {
+            abort(Response::HTTP_FORBIDDEN, 'You do not have access to this order.');
+        }
+
         return response()->json([
-            'data' => $order->timelines()->latest()->get()
+            'data' => $order->statusLogs()->latest()->get()
         ]);
     }
 

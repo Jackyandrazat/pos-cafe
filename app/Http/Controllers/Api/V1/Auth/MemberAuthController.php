@@ -44,6 +44,14 @@ class MemberAuthController extends Controller
                     'is_guest' => false,
                     'customer_id' => $customer->id,
                 ]);
+            } else {
+                if ($user->is_guest || (int) $user->customer_id !== (int) $customer->id) {
+                    $user->update([
+                        'is_guest' => false,
+                        'customer_id' => $customer->id,
+                        'name' => $customer->name ?? $user->name,
+                    ]);
+                }
             }
 
             // 4️⃣ Revoke token lama khusus self-order

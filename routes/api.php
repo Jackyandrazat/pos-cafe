@@ -30,6 +30,14 @@ Route::prefix('v1')->group(function () {
     Route::post('/auth/guest', [GuestAuthController::class, 'store']);
     Route::post('/auth/member', [MemberAuthController::class, 'login']);
     Route::get('/promotions', [PromotionController::class, 'index']);
+    Route::get('/payment-accounts', [\App\Http\Controllers\Api\V1\PaymentAccountController::class, 'index']);
+    Route::get('/store-config', [\App\Http\Controllers\Api\V1\StoreConfigController::class, 'show']);
+
+    // Table Service Calls (Panggil Pelayan dari Meja) & Table Info
+    Route::get('/tables/{tableNumber}', [\App\Http\Controllers\Api\V1\TableServiceCallController::class, 'showTable']);
+    Route::post('/tables/{tableNumber}/call-waiter', [\App\Http\Controllers\Api\V1\TableServiceCallController::class, 'callWaiter']);
+    Route::post('/tables/{tableNumber}/cancel-waiter', [\App\Http\Controllers\Api\V1\TableServiceCallController::class, 'cancelWaiter']);
+    Route::get('/tables/{tableNumber}/call-status', [\App\Http\Controllers\Api\V1\TableServiceCallController::class, 'callStatus']);
 
     Route::middleware('auth:sanctum')->get('/auth/validate', function (Request $request) {
         return response()->json(['user' => $request->user()]);
@@ -67,6 +75,8 @@ Route::prefix('v1')->group(function () {
         // Payments
         Route::get('/orders/{order}/payments',                         [PaymentController::class, 'index']);
         Route::post('/orders/{order}/payments',                        [PaymentController::class, 'store']);
+        Route::delete('/orders/{order}/payments/pending',              [PaymentController::class, 'cancelPending']);
+        Route::delete('/orders/{order}/payments/{payment}',            [PaymentController::class, 'destroy']);
         Route::get('/payments/{payment}',                              [PaymentController::class, 'show']);
         Route::patch('/orders/{order}/payments/{payment}/confirm',     [PaymentController::class, 'confirm'])->name('payments.confirm');
 

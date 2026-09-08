@@ -12,11 +12,11 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Topping;
-use App\Services\GamifiedLoyaltyService;
 use App\Services\GiftCardService;
-use App\Services\LoyaltyService;
 use App\Services\PromotionService;
 use App\Services\ShiftGuard;
+use App\Services\StockService;
+use App\Services\StockValidationService;
 use App\Support\Feature;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -28,8 +28,6 @@ class OrderController extends Controller
 {
     public function __construct(
         protected GiftCardService $giftCardService,
-        protected LoyaltyService $loyaltyService,
-        protected GamifiedLoyaltyService $gamifiedLoyaltyService,
     ) {
     }
 
@@ -56,9 +54,22 @@ class OrderController extends Controller
         $user = $request->user();
         ShiftGuard::ensureActiveShift($user);
 
-        $pendingGiftCard = null;
+        // --- Idempotency: jika key sudah pernah digunakan, return order yang ada ---
+        $idempotencyKey = $request->header('X-Idempotency-Key');
+        if ($idempotencyKey) {
+            $existingOrder = Order::where('idempotency_key', $idempotencyKey)
+                ->where('user_id', $user->id)
+                ->first();
 
-        $order = DB::transaction(function () use ($data, $user, &$pendingGiftCard) {
+            if ($existingOrder) {
+                return (new OrderResource($existingOrder->load(['items.product', 'customer', 'items.size', 'items.toppings'])))
+                    ->response()
+                    ->setStatusCode(Response::HTTP_OK);
+            }
+        }
+
+        // --- Semua side effects di dalam satu transaksi ---
+        $order = DB::transaction(function () use ($data, $user, $idempotencyKey) {
             $customer = null;
             if (Feature::enabled('loyalty') && ! empty($data['customer_id'])) {
                 $customer = Customer::find($data['customer_id']);
@@ -82,6 +93,7 @@ class OrderController extends Controller
                 'gift_card_amount' => 0,
                 'service_fee_order' => 0,
                 'total_order' => 0,
+                'idempotency_key' => $idempotencyKey,
             ]);
 
             foreach ($data['items'] as $item) {
@@ -126,7 +138,7 @@ class OrderController extends Controller
 
                 $orderItem = $order->items()->create([
                     'product_id' => $product->id,
-                    'size_id' => $size->id ?? null,
+                    'size_id' => $size?->id,
                     'qty' => $qty,
                     'price' => $basePrice,
                     'discount_amount' => $discount,
@@ -171,7 +183,12 @@ class OrderController extends Controller
             $manualDiscount = max((float) ($order->discount_order ?? 0), 0);
             $remaining = max($subtotal - $manualDiscount, 0);
 
+            // --- Promo: validasi + catat usage di dalam transaksi ---
             if (Feature::enabled('promotions') && ! empty($data['promotion_code'])) {
+                if ($user->is_guest) {
+                    abort(Response::HTTP_UNPROCESSABLE_ENTITY, 'Promo dan voucher hanya berlaku untuk akun Member terdaftar.');
+                }
+
                 try {
                     $promotionResult = PromotionService::validateAndCalculate(
                         $data['promotion_code'],
@@ -190,6 +207,7 @@ class OrderController extends Controller
                 }
             }
 
+            // --- Gift card: validasi + potong saldo di dalam transaksi ---
             if (Feature::enabled('gift_cards') && ! empty($data['gift_card_code'])) {
                 try {
                     $giftCardResult = $this->giftCardService->prepareRedemption(
@@ -206,7 +224,13 @@ class OrderController extends Controller
                     $order->gift_card_code = $giftCardResult['code'];
                     $order->gift_card_amount = $giftCardResult['amount'];
                     $remaining = max($remaining - $giftCardResult['amount'], 0);
-                    $pendingGiftCard = $giftCardResult;
+
+                    // Potong saldo gift card di dalam transaksi ini
+                    $this->giftCardService->redeemForOrder(
+                        $order,
+                        $giftCardResult['gift_card'],
+                        $giftCardResult['amount'],
+                    );
                 }
             }
 
@@ -214,26 +238,15 @@ class OrderController extends Controller
             $order->save();
             $order->logStatus(OrderStatus::Draft, 'Order created');
 
+            // --- Promo usage: catat di dalam transaksi ---
+            if (Feature::enabled('promotions')) {
+                PromotionService::syncUsage($order);
+            }
+
+            // --- Loyalty: TIDAK diberikan di sini, hanya saat order completed via Observer ---
+
             return $order;
         });
-
-        if (Feature::enabled('promotions')) {
-            PromotionService::syncUsage($order);
-        }
-
-        if ($pendingGiftCard) {
-            $this->giftCardService->redeemForOrder(
-                $order,
-                $pendingGiftCard['gift_card'],
-                $pendingGiftCard['amount'],
-            );
-        }
-
-        if (Feature::enabled('loyalty')) {
-            $freshOrder = $order->fresh(['customer', 'items']);
-            $this->loyaltyService->rewardOrderPoints($freshOrder);
-            $this->gamifiedLoyaltyService->trackOrderProgress($freshOrder);
-        }
 
         return (new OrderResource($order->load(['items.product', 'customer', 'items.size', 'items.toppings'])))
             ->response()
@@ -244,7 +257,7 @@ class OrderController extends Controller
     {
         $this->ensureOrderOwner($request->user(), $order);
 
-        return new OrderResource($order->load(['items.product','items.toppings', 'customer']));
+        return new OrderResource($order->load(['items.product', 'items.toppings', 'items.size', 'customer']));
     }
 
     public function submit(Request $request, Order $order): OrderResource
@@ -259,6 +272,13 @@ class OrderController extends Controller
 
         if ($order->items()->count() === 0) {
             abort(Response::HTTP_UNPROCESSABLE_ENTITY, 'Cannot submit an order without items.');
+        }
+
+        // Validasi stok sebelum submit agar gagal lebih awal
+        try {
+            StockValidationService::validateStockForOrder($order);
+        } catch (\App\Exceptions\StockValidationException $e) {
+            abort(Response::HTTP_UNPROCESSABLE_ENTITY, $e->getMessage());
         }
 
         $order->status = OrderStatus::Pending->value;
@@ -280,16 +300,24 @@ class OrderController extends Controller
             abort(Response::HTTP_UNPROCESSABLE_ENTITY, 'Order cannot be cancelled at this stage.');
         }
 
-        $order->status = OrderStatus::Cancelled->value;
-        $order->save();
-        $order->logStatus(OrderStatus::Cancelled, 'Order cancelled by user');
+        DB::transaction(function () use ($order) {
+            // Kembalikan stok jika sudah pernah dikurangi
+            if ($order->stock_deducted) {
+                StockService::restoreIngredientsFromOrder($order);
+                $order->stock_deducted = false;
+            }
+
+            $order->status = OrderStatus::Cancelled->value;
+            $order->save();
+            $order->logStatus(OrderStatus::Cancelled, 'Order cancelled by user');
+        });
 
         return new OrderResource($order->fresh(['items.product', 'customer']));
     }
 
     protected function ensureOrderOwner($user, Order $order): void
     {
-        if ($order->user_id !== $user->id) {
+        if ($order->user_id !== $user->id && ! $user->hasAnyRole(['admin', 'kasir', 'owner'])) {
             abort(Response::HTTP_FORBIDDEN, 'You do not have access to this order.');
         }
     }

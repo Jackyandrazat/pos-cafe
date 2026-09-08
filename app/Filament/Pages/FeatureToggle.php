@@ -23,6 +23,13 @@ class FeatureToggle extends Page implements HasForms
 
     protected static string $view = 'filament.pages.feature-toggle';
 
+    public static function canAccess(): bool
+    {
+        $user = auth()->user();
+
+        return $user && $user->hasRole('admin');
+    }
+
     public ?array $data = [];
 
     public function mount(): void

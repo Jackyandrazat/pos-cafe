@@ -38,6 +38,12 @@ class GamifiedLoyaltyService
                 continue;
             }
 
+            // --- Deduplikasi per-order: cek apakah order ini sudah pernah di-track ---
+            $trackedOrders = $progress->meta['tracked_order_ids'] ?? [];
+            if (in_array($order->id, $trackedOrders, true)) {
+                continue;
+            }
+
             $increment = $this->calculateIncrement($challenge, $order, $progress);
 
             if ($increment <= 0) {
@@ -49,6 +55,11 @@ class GamifiedLoyaltyService
                 $progress->current_value + $increment,
             );
             $progress->last_progressed_at = Carbon::now();
+
+            // Catat order ini sebagai sudah di-track
+            $meta = $progress->meta ?? [];
+            $meta['tracked_order_ids'] = array_merge($trackedOrders, [$order->id]);
+            $progress->meta = $meta;
 
             if ($progress->current_value >= $challenge->target_value && ! $progress->rewarded_at) {
                 $progress->completed_at = Carbon::now();

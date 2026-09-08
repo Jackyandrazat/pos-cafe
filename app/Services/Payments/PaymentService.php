@@ -4,10 +4,12 @@ namespace App\Services\Payments;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Exceptions\StockValidationException;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\User;
 use App\Services\StockService;
+use App\Services\StockValidationService;
 use Illuminate\Support\Facades\DB;
 
 class PaymentService
@@ -33,11 +35,30 @@ class PaymentService
         $this->validateAmount($order, $method, $amount);
 
         return DB::transaction(function () use ($order, $method, $channel, $amount, $shiftId) {
-            if ($method === 'cash') {
-                return $this->processCash($order, $amount, $shiftId);
+            $lockedOrder = Order::where('id', $order->id)->lockForUpdate()->first() ?? $order;
+            $this->validateOrder($lockedOrder);
+
+            // Cek apakah sudah ada pembayaran pending untuk order ini (Idempotency Guard)
+            $existingPending = $lockedOrder->payments()
+                ->where('status', PaymentStatus::Pending->value)
+                ->latest()
+                ->first();
+
+            if ($existingPending) {
+                // Jika metode & channel pembayaran sama, kembalikan pembayaran pending yang sudah ada
+                if ($existingPending->payment_method === $method && (string) $existingPending->payment_channel === (string) $channel) {
+                    return $existingPending;
+                }
+
+                // Jika pelanggan berganti metode pembayaran, hapus pembayaran pending yang lama
+                $existingPending->delete();
             }
 
-            return $this->processDigital($order, $method, $channel, $amount, $shiftId);
+            if ($method === 'cash') {
+                return $this->processCash($lockedOrder, $amount, $shiftId);
+            }
+
+            return $this->processDigital($lockedOrder, $method, $channel, $amount, $shiftId);
         });
     }
 
@@ -59,7 +80,7 @@ class PaymentService
                 'confirmed_at' => now(),
             ]);
 
-            $order = $payment->order()->with('order_items.product.ingredients.ingredient')->first();
+            $order = $payment->order()->with('items.product.ingredients.ingredient', 'items.toppings.topping.ingredients.ingredient')->first();
             $this->finalizeOrder($order, $payment->amount_paid);
 
             return $payment->fresh();
@@ -69,31 +90,50 @@ class PaymentService
     /**
      * Tangani notifikasi webhook dari payment gateway.
      * Digunakan oleh PaymentWebhookController.
+     *
+     * Dilindungi oleh:
+     * 1. DB::transaction untuk atomicity
+     * 2. lockForUpdate untuk mencegah pemrosesan ganda
+     * 3. processed_webhook_at sebagai idempotency guard
      */
     public function handleWebhook(array $payload): void
     {
         $result = $this->gatewayManager->handleWebhook($payload);
 
-        $payment = Payment::where('external_reference', $result['reference'])->first();
+        DB::transaction(function () use ($result) {
+            $payment = Payment::query()
+                ->where('external_reference', $result['reference'])
+                ->lockForUpdate()
+                ->first();
 
-        if (! $payment) {
-            return; // Referensi tidak ditemukan, abaikan
-        }
+            if (! $payment) {
+                return; // Referensi tidak ditemukan, abaikan
+            }
 
-        if (in_array($payment->status, [PaymentStatus::Captured->value, PaymentStatus::Failed->value], true)) {
-            return; // Sudah final, abaikan duplikasi
-        }
+            // Sudah pernah diproses oleh webhook sebelumnya (idempotency guard)
+            if ($payment->processed_webhook_at) {
+                return;
+            }
 
-        $newStatus = $result['status'];
-        $payment->update([
-            'status'  => $newStatus,
-            'paid_at' => $newStatus === PaymentStatus::Captured->value ? now() : $payment->paid_at,
-        ]);
+            // Sudah final, abaikan duplikasi
+            if (in_array($payment->status, [PaymentStatus::Captured->value, PaymentStatus::Failed->value], true)) {
+                return;
+            }
 
-        if ($newStatus === PaymentStatus::Captured->value) {
-            $order = $payment->order()->with('order_items.product.ingredients.ingredient')->first();
-            $this->finalizeOrder($order, $payment->amount_paid);
-        }
+            $newStatus = $result['status'];
+            $payment->update([
+                'status'               => $newStatus,
+                'paid_at'              => $newStatus === PaymentStatus::Captured->value ? now() : $payment->paid_at,
+                'processed_webhook_at' => now(),
+            ]);
+
+            if ($newStatus === PaymentStatus::Captured->value) {
+                $order = $payment->order()
+                    ->with('items.product.ingredients.ingredient', 'items.toppings.topping.ingredients.ingredient')
+                    ->first();
+                $this->finalizeOrder($order, $payment->amount_paid);
+            }
+        });
     }
 
     // -------------------------------------------------------------------------
@@ -119,6 +159,7 @@ class PaymentService
             'shift_id'        => $shiftId,
         ]);
 
+        $order->load('items.product.ingredients.ingredient', 'items.toppings.topping.ingredients.ingredient');
         $this->finalizeOrder($order, $amount);
 
         return $payment;
@@ -143,7 +184,7 @@ class PaymentService
         ]);
 
         if ($charge['status'] === PaymentStatus::Captured->value) {
-            $order->load('order_items.product.ingredients.ingredient');
+            $order->load('items.product.ingredients.ingredient', 'items.toppings.topping.ingredients.ingredient');
             $this->finalizeOrder($order, $amount);
         }
 
@@ -152,7 +193,12 @@ class PaymentService
 
     /**
      * Selesaikan order setelah pembayaran captured:
-     * update status order + kurangi stok bahan baku.
+     * 1. Validasi kecukupan stok bahan baku
+     * 2. Update status order
+     * 3. Kurangi stok bahan baku (atomik, conditional)
+     * 4. Tandai stok sudah dikurangi
+     *
+     * @throws StockValidationException jika stok tidak cukup
      */
     protected function finalizeOrder(Order $order, float $paidAmount): void
     {
@@ -160,8 +206,20 @@ class PaymentService
         $grandTotal = (float) $order->total_order;
 
         if (($grandTotal - $captured) <= 0 && $order->status !== OrderStatus::Completed->value) {
-            $order->update(['status' => OrderStatus::Payment->value]);
-            $order->logStatus(OrderStatus::Payment, 'Pembayaran diterima oleh kasir.');
+
+            // Validasi stok sebelum pengurangan
+            StockValidationService::validateStockForOrder($order);
+
+            $newStatus = \App\Support\Feature::enabled('kitchen_display')
+                ? OrderStatus::Payment->value
+                : OrderStatus::Completed->value;
+
+            $order->update([
+                'status'         => $newStatus,
+                'stock_deducted' => true,
+            ]);
+            $order->logStatus(OrderStatus::from($newStatus), 'Pembayaran diterima oleh kasir.');
+
             StockService::reduceIngredientsFromOrder($order);
         }
     }
@@ -170,6 +228,27 @@ class PaymentService
     {
         if ($order->status === OrderStatus::Cancelled->value) {
             throw new \DomainException('Tidak bisa memproses pembayaran untuk order yang dibatalkan.');
+        }
+
+        // Hanya izinkan pembayaran untuk order yang sudah di-submit, draft (dengan item), atau open
+        $allowedStatuses = [
+            'open',
+            OrderStatus::Draft->value,
+            OrderStatus::Pending->value,
+            OrderStatus::Submitted->value,
+            OrderStatus::Confirmed->value,
+            OrderStatus::Payment->value,
+        ];
+
+        if (! in_array($order->status, $allowedStatuses, true)) {
+            throw new \DomainException(
+                'Order belum siap untuk dibayar. Status saat ini: ' . $order->status
+                . '. Order harus di-submit terlebih dahulu.'
+            );
+        }
+
+        if ($order->status === OrderStatus::Draft->value && $order->items()->count() === 0) {
+            throw new \DomainException('Tidak bisa membayar order yang belum memiliki item.');
         }
 
         $due = $this->getAmountDue($order);
@@ -185,6 +264,10 @@ class PaymentService
         // Cash boleh lebih (ada kembalian), metode lain tidak
         if ($method !== 'cash' && $amount > $due) {
             throw new \DomainException('Jumlah pembayaran melebihi sisa tagihan.');
+        }
+
+        if ($method === 'cash' && $amount < $due) {
+            throw new \DomainException('Uang tunai yang diterima kurang dari total tagihan (Rp ' . number_format($due, 0, ',', '.') . ').');
         }
     }
 

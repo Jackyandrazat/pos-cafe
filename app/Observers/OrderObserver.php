@@ -2,56 +2,86 @@
 
 namespace App\Observers;
 
-use App\Models\Order;
+use App\Models\CafeTable;
 use App\Models\CustomerPointTransaction;
+use App\Models\Order;
+use App\Support\Feature;
 use Illuminate\Support\Facades\DB;
 
 class OrderObserver
 {
     /**
+     * Handle the Order "created" event.
+     *
+     * Dipindahkan dari Order::booted() untuk konsolidasi.
+     */
+    public function created(Order $order): void
+    {
+        if (! Feature::enabled('table_management')) {
+            return;
+        }
+
+        if ($order->order_type === 'dine_in' && $order->table_id) {
+            CafeTable::whereKey($order->table_id)->update(['status' => 'occupied']);
+        }
+    }
+
+    /**
      * Handle the Order "updated" event.
+     *
+     * Menangani:
+     * 1. Manajemen status meja (dipindahkan dari Order::booted())
+     * 2. Loyalty points + gamified challenge saat order completed
      */
     public function updated(Order $order): void
     {
-        // 1️⃣ Pastikan status benar-benar berubah
+        // Pastikan status benar-benar berubah
         if (! $order->wasChanged('status')) {
             return;
         }
 
-        // 2️⃣ Hanya proses jika status menjadi completed
+        // --- 1. Manajemen meja ---
+        if (Feature::enabled('table_management')
+            && $order->order_type === 'dine_in'
+            && $order->table_id
+        ) {
+            match ($order->status) {
+                'completed' => CafeTable::whereKey($order->table_id)->update(['status' => 'cleaning']),
+                'cancelled' => CafeTable::whereKey($order->table_id)->update(['status' => 'available']),
+                default     => null,
+            };
+        }
+
+        // --- 2. Loyalty: hanya proses jika status menjadi completed ---
+        if (! Feature::enabled('loyalty')) {
+            return;
+        }
+
         if ($order->status !== 'completed') {
             return;
         }
 
-        // 3️⃣ Pastikan order punya customer
         if (! $order->customer_id) {
             return;
         }
 
-        // 4️⃣ Cegah double reward (KRUSIAL)
-        $alreadyRewarded = CustomerPointTransaction::where('source_type', Order::class)
-            ->where('source_id', $order->id)
-            ->exists();
-
-        if ($alreadyRewarded) {
-            return;
-        }
-
-        // 5️⃣ Jalankan semua logic loyalty setelah DB commit
+        // Jalankan semua logic loyalty setelah DB commit
         DB::afterCommit(function () use ($order) {
+            $freshOrder = $order->fresh(['customer', 'items']);
 
-            app(\App\Services\LoyaltyService::class)
-                ->rewardOrderPoints($order);
+            // --- Poin loyalitas (dengan deduplikasi) ---
+            $alreadyRewarded = CustomerPointTransaction::where('source_type', Order::class)
+                ->where('source_id', $freshOrder->id)
+                ->exists();
 
-            app(\App\Services\Loyalty\LoyaltyProgressService::class)
-                ->handleOrderCompleted($order);
+            if (! $alreadyRewarded) {
+                app(\App\Services\LoyaltyService::class)
+                    ->rewardOrderPoints($freshOrder);
+            }
 
-            $order->customer
-                ?->challengeProgresses
-                ->each(function ($progress) {
-                    app(\App\Services\Loyalty\LoyaltyRewardService::class)
-                        ->rewardIfEligible($progress);
-                });
+            // --- Gamified challenge progress (dengan deduplikasi per-order) ---
+            app(\App\Services\GamifiedLoyaltyService::class)
+                ->trackOrderProgress($freshOrder);
         });
     }
 }

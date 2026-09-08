@@ -25,5 +25,7 @@ class AppServiceProvider extends ServiceProvider
             PanelsRenderHook::GLOBAL_SEARCH_AFTER,
             fn () => view('filament.components.language-switcher'),
         );
+
+        \App\Models\Order::observe(\App\Observers\OrderObserver::class);
     }
 }

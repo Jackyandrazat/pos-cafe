@@ -2,7 +2,14 @@
 
 return [
     'status' => [
+        'draft' => 'Draf',
+        'pending' => 'Menunggu',
         'open' => 'Buka',
+        'submitted' => 'Diajukan',
+        'payment' => 'Pembayaran',
+        'confirmed' => 'Dikonfirmasi',
+        'preparing' => 'Disiapkan',
+        'ready' => 'Siap',
         'completed' => 'Selesai',
         'cancelled' => 'Dibatalkan',
         'unknown' => 'Tidak Diketahui',

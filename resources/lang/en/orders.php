@@ -2,7 +2,14 @@
 
 return [
     'status' => [
+        'draft' => 'Draft',
+        'pending' => 'Pending',
         'open' => 'Open',
+        'submitted' => 'Submitted',
+        'payment' => 'Payment',
+        'confirmed' => 'Confirmed',
+        'preparing' => 'Preparing',
+        'ready' => 'Ready',
         'completed' => 'Completed',
         'cancelled' => 'Cancelled',
         'unknown' => 'Unknown',

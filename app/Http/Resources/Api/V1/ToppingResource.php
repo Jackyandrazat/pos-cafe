@@ -13,7 +13,7 @@ class ToppingResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'price' => $this->price,
-            'is_active' => (bool) $this->is_active
+            'is_active' => (bool) ($this->is_active && $this->hasSufficientStock(1))
         ];
     }
 }

@@ -22,6 +22,13 @@ class TableQueueEntryResource extends Resource
 
     protected static ?string $navigationLabel = 'Antrean Pelanggan';
 
+    public static function canAccess(): bool
+    {
+        $user = auth()->user();
+
+        return $user && $user->hasAnyRole(['admin', 'owner', 'kasir']);
+    }
+
     public static function form(Form $form): Form
     {
         return $form

@@ -32,7 +32,13 @@ class AdminPanelProvider extends PanelProvider
             ->brandName('Laku By Kodeweb')
             ->colors([
                 'primary' => Color::Amber,
+                'gray'    => Color::Slate,
+                'success' => Color::Emerald,
+                'warning' => Color::Amber,
+                'danger'  => Color::Rose,
+                'info'    => Color::Indigo,
             ])
+            ->font('Plus Jakarta Sans')
             // ── Sidebar: fully collapsible (built-in Filament) ──
             ->sidebarFullyCollapsibleOnDesktop()
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
