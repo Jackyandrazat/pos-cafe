@@ -54,10 +54,28 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA', file_exists('/etc/ssl/certs/ca-certificates.crt') ? '/etc/ssl/certs/ca-certificates.crt' : null),
-                PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => env('MYSQL_ATTR_SSL_VERIFY_SERVER_CERT', null),
-            ], fn ($v) => ! is_null($v)) : [],
+            'options' => extension_loaded('pdo_mysql') ? (function () {
+                $ca = env('MYSQL_ATTR_SSL_CA');
+                if ($ca && ! file_exists($ca)) {
+                    $tempCa = sys_get_temp_dir().'/tidb-ca.pem';
+                    if (! file_exists($tempCa)) {
+                        @file_put_contents($tempCa, $ca);
+                    }
+                    $ca = file_exists($tempCa) ? $tempCa : null;
+                }
+                if (! $ca && file_exists('/etc/ssl/certs/ca-certificates.crt')) {
+                    $ca = '/etc/ssl/certs/ca-certificates.crt';
+                }
+
+                $opts = [];
+                if ($ca) {
+                    $opts[PDO::MYSQL_ATTR_SSL_CA] = $ca;
+                }
+                if (env('MYSQL_ATTR_SSL_VERIFY_SERVER_CERT') !== null) {
+                    $opts[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = filter_var(env('MYSQL_ATTR_SSL_VERIFY_SERVER_CERT'), FILTER_VALIDATE_BOOLEAN);
+                }
+                return $opts;
+            })() : [],
             'dump' => [
                 'dump_binary_path' => env('DUMP_BINARY_PATH', ''),
                 'useSingleTransaction' => true,

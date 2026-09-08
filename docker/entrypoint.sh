@@ -5,6 +5,15 @@ set -e
 PORT="${PORT:-80}"
 sed -i "s/PORT_PLACEHOLDER/${PORT}/g" /etc/nginx/http.d/default.conf
 
+# Handle TiDB Cloud SSL CA certificate
+if [ -n "$MYSQL_ATTR_SSL_CA" ] && [ ! -f "$MYSQL_ATTR_SSL_CA" ]; then
+    echo "Saving raw certificate to /tmp/tidb-ca.pem..."
+    printf "%s\n" "$MYSQL_ATTR_SSL_CA" > /tmp/tidb-ca.pem
+    export MYSQL_ATTR_SSL_CA="/tmp/tidb-ca.pem"
+elif [ -z "$MYSQL_ATTR_SSL_CA" ] && [ -f "/etc/ssl/certs/ca-certificates.crt" ]; then
+    export MYSQL_ATTR_SSL_CA="/etc/ssl/certs/ca-certificates.crt"
+fi
+
 # Ensure storage directories exist and have proper permissions
 mkdir -p /var/www/html/storage/framework/sessions \
          /var/www/html/storage/framework/views \
