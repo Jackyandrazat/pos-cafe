@@ -50,11 +50,10 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
 # Set permissions
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+RUN chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Expose ports
-EXPOSE 80 10000
+# Expose ports (7860 for Hugging Face, 10000 for Render, 80 for Standard)
+EXPOSE 7860 10000 80
 
 # Run entrypoint
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
