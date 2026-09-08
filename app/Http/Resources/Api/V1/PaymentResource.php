@@ -20,6 +20,7 @@ class PaymentResource extends JsonResource
             'amount'             => (float) $this->amount_paid,
             'change_return'      => (float) ($this->change_return ?? 0),
             'status'             => $this->status ?? 'captured',
+            'shift_id'           => $this->shift_id,
             'instructions'       => $this->meta,
             // Shortcut untuk QRIS — null jika bukan payment QRIS atau QR belum di-generate
             'qr_svg'             => $this->payment_method === 'qris' ? ($this->meta['qr_svg'] ?? null) : null,

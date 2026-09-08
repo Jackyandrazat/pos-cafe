@@ -32,6 +32,7 @@ class StoreConfigController extends Controller
             'data' => [
                 'cafe_name'             => $cafeName,
                 'self_order_allow_cash' => $allowCash,
+                'has_active_shift'      => \App\Models\Shift::open()->exists(),
                 'geofence'              => [
                     'enabled'       => $geofenceEnabled,
                     'latitude'      => $geofenceEnabled ? (float) $lat : null,

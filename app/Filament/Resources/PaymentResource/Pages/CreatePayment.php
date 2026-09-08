@@ -38,17 +38,16 @@ class CreatePayment extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $user        = auth()->user();
-        $activeShift = $user->activeShift();
-
-        // Cek shift aktif
-        if (! $activeShift) {
+        try {
+            $activeShift = \App\Services\ShiftGuard::getActiveShiftForConfirmation($user);
+        } catch (\Throwable $e) {
             Notification::make()
                 ->danger()
                 ->title('Shift belum dibuka')
-                ->body('Kasir harus membuka shift sebelum membuat pembayaran.')
+                ->body($e->getMessage())
                 ->send();
 
-            $this->addError('order_id', 'Kasir harus membuka shift sebelum membuat pembayaran.');
+            $this->addError('order_id', $e->getMessage());
             throw new Halt();
         }
 

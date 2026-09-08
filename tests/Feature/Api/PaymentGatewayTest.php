@@ -4,6 +4,8 @@ namespace Tests\Feature\Api;
 
 use App\Enums\PaymentStatus;
 use App\Models\Order;
+use App\Models\Role;
+use App\Models\Shift;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -12,6 +14,31 @@ use Tests\TestCase;
 class PaymentGatewayTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected Role $kasirRole;
+    protected Role $adminRole;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->kasirRole = Role::firstOrCreate(['name' => 'kasir'], ['guard_name' => 'web']);
+        $this->adminRole = Role::firstOrCreate(['name' => 'admin'], ['guard_name' => 'web']);
+    }
+
+    protected function createKasirWithShift(): array
+    {
+        $kasir = User::factory()->create();
+        $kasir->roles()->attach($this->kasirRole);
+
+        $shift = Shift::create([
+            'user_id'         => $kasir->id,
+            'shift_open_time' => now(),
+            'opening_balance' => 100000,
+        ]);
+
+        return [$kasir, $shift];
+    }
 
     // -------------------------------------------------------------------------
     // Mode: manual (default)
@@ -45,13 +72,14 @@ class PaymentGatewayTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
-    // Mode: manual — Digital payments → pending, kasir konfirmasi
+    // Mode: manual — Digital payments dari self-order bebas dibuat tanpa terhalang shift kasir
     // -------------------------------------------------------------------------
 
     public function test_qris_manual_creates_pending_payment(): void
     {
         config(['payment.mode' => 'manual']);
 
+        // Self-order customer dapat membuat pending payment meski shift kasir belum dibuka
         $user  = User::factory()->create();
         $order = Order::factory()->create(['user_id' => $user->id, 'total_order' => 20000]);
 
@@ -128,17 +156,80 @@ class PaymentGatewayTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
-    // Konfirmasi kasir (pending → captured)
+    // Guard Shift saat Konfirmasi Pembayaran di POS Cafe
     // -------------------------------------------------------------------------
 
-    public function test_cashier_can_confirm_pending_payment(): void
+    public function test_cashier_with_active_shift_can_confirm_pending_payment(): void
     {
         config(['payment.mode' => 'manual']);
 
-        $user  = User::factory()->create();
-        $order = Order::factory()->create(['user_id' => $user->id, 'total_order' => 20000]);
+        [$kasir, $shift] = $this->createKasirWithShift();
+        $customer = User::factory()->create();
+        $order = Order::factory()->create(['user_id' => $customer->id, 'total_order' => 20000]);
 
-        // Buat pembayaran pending terlebih dahulu
+        // Buat pembayaran pending self-order (awalnya shift_id null karena dibuat customer)
+        $payment = $order->payments()->create([
+            'payment_method' => 'qris',
+            'provider'       => 'qris-manual',
+            'status'         => PaymentStatus::Pending->value,
+            'amount_paid'    => 20000,
+            'payment_date'   => now(),
+            'shift_id'       => null,
+        ]);
+
+        Sanctum::actingAs($kasir);
+
+        $response = $this->patchJson("/api/v1/orders/{$order->id}/payments/{$payment->id}/confirm");
+
+        $response->assertOk()
+            ->assertJsonPath('data.status', PaymentStatus::Captured->value)
+            ->assertJsonPath('data.shift_id', $shift->id);
+
+        $this->assertDatabaseHas('payments', [
+            'id'           => $payment->id,
+            'status'       => PaymentStatus::Captured->value,
+            'confirmed_by' => $kasir->id,
+            'shift_id'     => $shift->id,
+        ]);
+    }
+
+    public function test_cashier_cannot_confirm_payment_without_active_shift(): void
+    {
+        config(['payment.mode' => 'manual']);
+
+        $kasir = User::factory()->create();
+        $kasir->roles()->attach($this->kasirRole);
+
+        $customer = User::factory()->create();
+        $order = Order::factory()->create(['user_id' => $customer->id, 'total_order' => 20000]);
+
+        $payment = $order->payments()->create([
+            'payment_method' => 'qris',
+            'provider'       => 'qris-manual',
+            'status'         => PaymentStatus::Pending->value,
+            'amount_paid'    => 20000,
+            'payment_date'   => now(),
+            'shift_id'       => null,
+        ]);
+
+        Sanctum::actingAs($kasir);
+
+        $response = $this->patchJson("/api/v1/orders/{$order->id}/payments/{$payment->id}/confirm");
+
+        $response->assertUnprocessable();
+        $this->assertStringContainsString('Kasir harus membuka shift terlebih dahulu', $response->json('message'));
+        $this->assertEquals(PaymentStatus::Pending->value, (string) $payment->fresh()->status);
+        $this->assertNull($payment->fresh()->shift_id);
+    }
+
+    public function test_customer_cannot_confirm_payment(): void
+    {
+        config(['payment.mode' => 'manual']);
+
+        $cust = \App\Models\Customer::factory()->create();
+        $customer = User::factory()->create(['customer_id' => $cust->id]);
+        $order = Order::factory()->create(['user_id' => $customer->id, 'total_order' => 20000]);
+
         $payment = $order->payments()->create([
             'payment_method' => 'qris',
             'provider'       => 'qris-manual',
@@ -147,18 +238,13 @@ class PaymentGatewayTest extends TestCase
             'payment_date'   => now(),
         ]);
 
-        Sanctum::actingAs($user);
+        Sanctum::actingAs($customer);
 
         $response = $this->patchJson("/api/v1/orders/{$order->id}/payments/{$payment->id}/confirm");
 
-        $response->assertOk()
-            ->assertJsonPath('data.status', PaymentStatus::Captured->value);
-
-        $this->assertDatabaseHas('payments', [
-            'id'           => $payment->id,
-            'status'       => PaymentStatus::Captured->value,
-            'confirmed_by' => $user->id,
-        ]);
+        $response->assertForbidden();
+        $this->assertStringContainsString('Hanya kasir atau staf', $response->json('message'));
+        $this->assertEquals(PaymentStatus::Pending->value, (string) $payment->fresh()->status);
     }
 
     // -------------------------------------------------------------------------
@@ -194,9 +280,9 @@ class PaymentGatewayTest extends TestCase
 
         $user  = User::factory()->create();
         $order = Order::factory()->create([
-            'user_id' => $user->id,
+            'user_id'     => $user->id,
             'total_order' => 20000,
-            'status'  => 'cancelled',
+            'status'      => 'cancelled',
         ]);
 
         Sanctum::actingAs($user);

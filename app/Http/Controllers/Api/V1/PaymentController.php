@@ -42,10 +42,11 @@ class PaymentController extends Controller
     {
         $user  = $request->user();
         $this->ensureOrderOwner($user, $order);
+
         $shift = ShiftGuard::ensureActiveShift($user);
 
         try {
-            $data            = $request->validated();
+            $data             = $request->validated();
             $data['shift_id'] = $shift?->id;
 
             $payment = $this->paymentService->process($order, $data, $shift?->id);
@@ -65,17 +66,24 @@ class PaymentController extends Controller
      */
     public function confirm(Request $request, Order $order, Payment $payment): JsonResponse
     {
-        $this->ensureOrderOwner($request->user(), $order);
+        $user = $request->user();
+
+        // Hanya staf (kasir, admin, owner) yang boleh mengonfirmasi pembayaran
+        if (! $user->hasAnyRole(['admin', 'kasir', 'owner'])) {
+            abort(Response::HTTP_FORBIDDEN, 'Hanya kasir atau staf yang dapat mengonfirmasi pembayaran.');
+        }
 
         if ($payment->order_id !== $order->id) {
             abort(Response::HTTP_NOT_FOUND, 'Pembayaran tidak ditemukan di order ini.');
         }
 
         try {
-            $confirmed = $this->paymentService->confirm($payment, $request->user());
+            $confirmed = $this->paymentService->confirm($payment, $user);
 
             return (new PaymentResource($confirmed))->response();
         } catch (\LogicException $e) {
+            abort(Response::HTTP_UNPROCESSABLE_ENTITY, $e->getMessage());
+        } catch (\DomainException $e) {
             abort(Response::HTTP_UNPROCESSABLE_ENTITY, $e->getMessage());
         }
     }

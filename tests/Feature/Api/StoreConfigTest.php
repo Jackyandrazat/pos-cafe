@@ -48,10 +48,26 @@ class StoreConfigTest extends TestCase
                 'success' => true,
                 'data' => [
                     'self_order_allow_cash' => true,
+                    'has_active_shift'      => false,
                     'geofence' => [
                         'enabled' => false,
                     ],
                 ],
             ]);
+    }
+
+    public function test_store_config_reflects_active_shift_state(): void
+    {
+        $user = \App\Models\User::factory()->create();
+        \App\Models\Shift::create([
+            'user_id'         => $user->id,
+            'shift_open_time' => now(),
+            'opening_balance' => 50000,
+        ]);
+
+        $response = $this->getJson('/api/v1/store-config');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.has_active_shift', true);
     }
 }

@@ -555,6 +555,19 @@ class PaymentResource extends Resource
                     ->requiresConfirmation()
                     ->modalHeading('Konfirmasi Pembayaran')
                     ->modalDescription(fn (Payment $record) => "Konfirmasi bahwa pembayaran sebesar Rp " . number_format($record->amount_paid, 0, ',', '.') . " via " . strtoupper($record->payment_method) . " telah diterima?")
+                    ->before(function (Action $action) {
+                        try {
+                            \App\Services\ShiftGuard::getActiveShiftForConfirmation(auth()->user());
+                        } catch (\Throwable $e) {
+                            Notification::make()
+                                ->title('Shift Belum Dibuka')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+
+                            $action->halt();
+                        }
+                    })
                     ->action(function (Payment $record) {
                         try {
                             app(\App\Services\Payments\PaymentService::class)->confirm($record, auth()->user());

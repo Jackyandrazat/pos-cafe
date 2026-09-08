@@ -8,6 +8,7 @@ use App\Exceptions\StockValidationException;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\User;
+use App\Services\ShiftGuard;
 use App\Services\StockService;
 use App\Services\StockValidationService;
 use Illuminate\Support\Facades\DB;
@@ -72,12 +73,16 @@ class PaymentService
             throw new \LogicException("Pembayaran tidak dalam status pending. Status saat ini: {$payment->status}");
         }
 
-        return DB::transaction(function () use ($payment, $confirmedBy) {
+        // Guard: Pastikan kasir / toko memiliki shift aktif sebelum konfirmasi pembayaran
+        $activeShift = ShiftGuard::getActiveShiftForConfirmation($confirmedBy);
+
+        return DB::transaction(function () use ($payment, $confirmedBy, $activeShift) {
             $payment->update([
                 'status'       => PaymentStatus::Captured->value,
                 'paid_at'      => now(),
                 'confirmed_by' => $confirmedBy->id,
                 'confirmed_at' => now(),
+                'shift_id'     => $payment->shift_id ?? $activeShift->id,
             ]);
 
             $order = $payment->order()->with('items.product.ingredients.ingredient', 'items.toppings.topping.ingredients.ingredient')->first();
