@@ -10,8 +10,12 @@ if [ -n "$MYSQL_ATTR_SSL_CA" ] && [ ! -f "$MYSQL_ATTR_SSL_CA" ]; then
     echo "Saving raw certificate to /tmp/tidb-ca.pem..."
     printf "%s\n" "$MYSQL_ATTR_SSL_CA" > /tmp/tidb-ca.pem
     export MYSQL_ATTR_SSL_CA="/tmp/tidb-ca.pem"
-elif [ -z "$MYSQL_ATTR_SSL_CA" ] && [ -f "/etc/ssl/certs/ca-certificates.crt" ]; then
-    export MYSQL_ATTR_SSL_CA="/etc/ssl/certs/ca-certificates.crt"
+elif [ -z "$MYSQL_ATTR_SSL_CA" ]; then
+    if [ -f "/etc/ssl/certs/isrgrootx1.pem" ]; then
+        export MYSQL_ATTR_SSL_CA="/etc/ssl/certs/isrgrootx1.pem"
+    elif [ -f "/etc/ssl/certs/ca-certificates.crt" ]; then
+        export MYSQL_ATTR_SSL_CA="/etc/ssl/certs/ca-certificates.crt"
+    fi
 fi
 
 # Ensure storage directories exist and have proper permissions
