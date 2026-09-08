@@ -31,6 +31,27 @@ chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 # Create storage symlink
 php artisan storage:link --force || true
 
+# Auto-create database if not exists
+if [ -n "$DB_DATABASE" ] && [ "$DB_CONNECTION" = "mysql" ]; then
+    php -r "
+    try {
+        \$host = getenv('DB_HOST') ?: '127.0.0.1';
+        \$port = getenv('DB_PORT') ?: 3306;
+        \$user = getenv('DB_USERNAME') ?: 'root';
+        \$pass = getenv('DB_PASSWORD') ?: '';
+        \$db   = getenv('DB_DATABASE') ?: 'pos_cafe';
+        \$ca   = getenv('MYSQL_ATTR_SSL_CA');
+        \$opts = [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION];
+        if (\$ca && file_exists(\$ca)) { \$opts[PDO::MYSQL_ATTR_SSL_CA] = \$ca; }
+        \$pdo = new PDO(\"mysql:host={\$host};port={\$port}\", \$user, \$pass, \$opts);
+        \$pdo->exec(\"CREATE DATABASE IF NOT EXISTS \`{\$db}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;\");
+        echo \"Database '{\$db}' verified/created successfully on host {\$host}.\n\";
+    } catch (Exception \$e) {
+        echo \"Database check/create notice: \" . \$e->getMessage() . \"\n\";
+    }
+    "
+fi
+
 # Run database migrations if configured
 if [ "$RUN_MIGRATIONS" = "true" ]; then
     echo "Running database migrations on database: ${DB_DATABASE}..."
