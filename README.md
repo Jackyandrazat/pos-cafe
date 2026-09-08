@@ -1,184 +1,191 @@
-# LakuPOS — Cloud-Native Cafe Point of Sale & Self-Order Ecosystem
+# Labo By kodeeweb System
 
 [![Laravel](https://img.shields.io/badge/Laravel-11.x-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)](https://laravel.com)
 [![Filament](https://img.shields.io/badge/Filament-3.x-F59E0B?style=for-the-badge&logo=filament&logoColor=white)](https://filamentphp.com)
 [![PHP](https://img.shields.io/badge/PHP-8.3-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://php.net)
-[![React](https://img.shields.io/badge/React-18.x-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
+[![React PWA](https://img.shields.io/badge/React%20PWA-Self--Order-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com)
 [![Database](https://img.shields.io/badge/TiDB%20Cloud-MySQL-00758F?style=for-the-badge&logo=mysql&logoColor=white)](https://tidbcloud.com)
 
-**LakuPOS** adalah ekosistem Point of Sale (POS) dan Self-Order modern berbasis cloud yang dirancang khusus untuk industri Food & Beverage (F&B / Kafe & Restoran). Sistem ini memadukan **Backoffice & Kasir Admin (Laravel 11 + Filament v3)** dengan **Customer Self-Order Web PWA (React 18 + Vite)** yang saling terintegrasi secara real-time.
+Sistem POS (Point of Sale) untuk sebuah kafe yang dibuat menggunakan **Laravel 11** dan **Filament**. Proyek ini mencakup manajemen produk, bahan baku, transaksi, pembelian bahan baku, shift kasir, laporan penjualan, dan lebih banyak lagi. Sistem ini dirancang untuk mempermudah pengelolaan operasional sehari-hari di kafe dengan fokus pada kemudahan penggunaan dan integrasi data.
+
+Kini sistem telah berkembang menjadi ekosistem kafe modern yang terintegrasi secara cloud dengan **Kitchen Display System (KDS)** dan **Customer Self-Order Web Hub (PWA)** berbasis QR Code per meja.
 
 ---
 
-## 🌐 Live Infrastructure & Deployment
+## 🌐 Live Deployment & Lingkungan Cloud
 
-| Komponen | Platform | Region | Status | URL Akses |
+| Komponen | Platform / Host | Region | Status | URL Akses |
 |---|---|---|---|---|
-| **Backend & KDS Panel** | Render Cloud (Docker) | Singapore / US | 🟢 Live | `https://pos-cafe-f38k.onrender.com` |
-| **Self-Order Hub PWA** | Vercel | Global CDN | 🟢 Live | `https://github.com/Jackyandrazat/cafe-order-hub` |
-| **Primary Database** | TiDB Cloud Serverless (MySQL) | Singapore (`ap-southeast-1`) | 🟢 Connected | Low Latency (<25ms) |
+| **Backend & Panel Admin POS** | Render Cloud (Docker) | Singapore / US | 🟢 Live | `https://pos-cafe-f38k.onrender.com` |
+| **Customer Self-Order Hub** | Vercel (PWA) | Global CDN | 🟢 Live | `https://github.com/Jackyandrazat/cafe-order-hub` |
+| **Database Utama** | TiDB Cloud Serverless (MySQL) | Singapore (`ap-southeast-1`) | 🟢 Connected | Latensi rendah (<25ms) |
 
 ---
 
-## 🏛️ Arsitektur Ekosistem
+## 🛠 Teknologi yang Digunakan
 
-```
-                                  ┌────────────────────────┐
-                                  │   Pelanggan di Meja    │
-                                  │  (Smartphone / Browser)│
-                                  └───────────┬────────────┘
-                                              │ Scan QR Meja
-                                              ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                    Customer Self-Order Hub (cafe-order-hub)                 │
-│  - React 18 + Vite + TypeScript + Tailwind CSS + shadcn/ui                 │
-│  - Geofencing GPS Verification (Anti-Fraud Luar Area Kafe)                  │
-│  - Guest Session Lifecycle (Auto-Expire 4 Jam, Escape Hatch Reset Tamu)     │
-│  - Bottom Sheet Customization (Ukuran, Topping, Ice/Sugar Level)            │
-│  - Real-Time Order Tracking & Digital Sound Chime saat Pesanan Siap        │
-│  - Integrasi Digital Payments (QRIS, Midtrans, Xendit, Bayar Kasir)         │
-└─────────────────────────────────────┬───────────────────────────────────────┘
-                                      │ REST API / Bearer Token
-                                      ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                    Backend Core & Backoffice (pos-cafe)                     │
-│  - Laravel 11 + Filament v3 + Livewire + Alpine.js                          │
-│  - Dockerized Alpine Linux + PHP 8.3-FPM + Nginx + OPcache + Auto DB Sync   │
-│  - Robust API Controllers with Idempotency Key & Transaction Guards         │
-│                                                                             │
-│  ┌───────────────────────┐ ┌───────────────────────┐ ┌───────────────────┐  │
-│  │   Kitchen Display     │ │   Kasir & Transaksi   │ │  Inventori Resep  │  │
-│  │   (KDS Realtime)      │ │   (POS Dine-in/ToGo)  │ │  & Waste Tracking │  │
-│  └───────────────────────┘ └───────────────────────┘ └───────────────────┘  │
-│  ┌───────────────────────┐ ┌───────────────────────┐ ┌───────────────────┐  │
-│  │   Dynamic Pricing &   │ │   Gamified Loyalty &  │ │  Payment Gateway  │  │
-│  │   Promo Engine (BOGO) │ │   Tiering Challenge   │ │  Webhook Idempot. │  │
-│  └───────────────────────┘ └───────────────────────┘ └───────────────────┘  │
-└─────────────────────────────────────┬───────────────────────────────────────┘
-                                      │
-                                      ▼
-                       ┌─────────────────────────────┐
-                       │  TiDB Cloud Serverless DB   │
-                       │  (MySQL Compatible, SG)     │
-                       └─────────────────────────────┘
-```
+* **Laravel 11**: Framework PHP yang powerful untuk pengembangan web.
+* **Filament 3**: Admin panel dan dashboard yang elegan untuk Laravel.
+* **MySQL / TiDB Cloud**: Sistem manajemen database relasional yang digunakan untuk penyimpanan data (kompatibel penuh MySQL dengan autoscaling).
+* **Chart.js**: Library JavaScript untuk menampilkan grafik data penjualan secara interaktif.
+* **Livewire 3 & Alpine.js**: Reactive state management pada antarmuka admin dan kasir.
+* **React 18 + Vite + Tailwind CSS**: Frontend PWA mobile-first untuk Customer Self-Order Hub.
+* **Docker & Nginx**: Multi-stage containerization berbasis Alpine Linux dengan PHP 8.3-FPM dan OPcache aktif.
 
 ---
 
-## 🚀 Fitur Utama & Keunggulan Bisnis
+## 📋 Fitur Utama
 
-### 1. Kitchen Display System (KDS) & Audio Chime
-- Tampilan interaktif khusus barista dan koki dapur untuk memantau tiket pesanan masuk secara real-time.
-- **Strict State Machine:** Transisi status pesanan (`submitted` ➔ `confirmed` ➔ `preparing` ➔ `ready` ➔ `completed`) divalidasi ketat sehingga status tidak dapat melompat secara keliru.
-- **Digital Sound Chime:** Web Audio API membunyikan nada digital di smartphone pelanggan tepat saat barista menandai pesanan menjadi `ready`.
+Sistem Labo By kodeeweb ini dilengkapi dengan berbagai fitur lengkap untuk mendukung operasional kafe Anda:
 
-### 2. QR Code Meja & Anti-Fraud Geofencing (GPS)
-- Setiap meja kafe memiliki QR Code unik yang langsung membuka halaman pesanan dengan nomor meja terikat otomatis.
-- **Geofence Protection:** Menggunakan formula *Haversine* untuk menghitung jarak akurat pembeli ke koordinat kafe.
-- **Dynamic Payment Gating:** Jika pembeli berada di luar area kafe (misal orang jahil mencoba order dari luar kota), opsi **Bayar Tunai di Kasir otomatis dinonaktifkan**, mewajibkan pembayaran digital (QRIS/E-Wallet/Transfer) di muka agar tidak merugikan dapur.
+* **Manajemen Produk**:
+    * Fungsionalitas CRUD (Create, Read, Update, Delete) untuk produk menu.
+    * Pengelolaan kategori produk untuk organisasi yang lebih baik.
+    * Pengaturan harga, stok, varian ukuran (Regular, Large), dan deskripsi detail untuk setiap produk.
+* **Manajemen Bahan Baku**:
+    * Fungsionalitas CRUD untuk bahan baku (ingredient).
+    * Input komposisi bahan baku untuk setiap produk, memungkinkan pengurangan stok otomatis saat produk terjual.
+    * **Resep Topping (`topping_ingredients`)**: Konsumsi bahan baku tambahan untuk topping (misal: extra shot espresso, oat milk) terpotong secara otomatis dan akurat.
+    * **Atomic Stock Deduction**: Conditional decrement (`WHERE stock_qty >= needed`) untuk mencegah stok menjadi minus akibat pesanan bersamaan.
+    * Sistem notifikasi untuk bahan baku yang hampir kedaluwarsa atau menipis.
+* **Transaksi & Pembayaran**:
+    * Membuat order baru yang intuitif untuk pelanggan (Dine In & Take Away).
+    * Mengelola berbagai jenis pembayaran dan status order.
+    * Opsi untuk mengirim struk via WhatsApp kepada pelanggan.
+    * **Multi-Payment Gateway**: Mendukung Bayar di Kasir (Tunai), QRIS Statis / Manual, Transfer Bank, Midtrans, dan Xendit.
+    * **Idempotency Guard**: Pengamanan webhook pembayaran dengan database locking (`lockForUpdate`) untuk mencegah duplikasi order.
+* **Shift Kasir**:
+    * Fitur untuk membuka dan menutup shift kasir dengan pencatatan modal awal (*starting cash*).
+    * Rekapitulasi transaksi per shift untuk pelacakan performa dan rekonsiliasi selisih uang fisik laci kas.
+* **Modul Pembelian (Restok)**:
+    * Mengelola proses pembelian bahan baku dari supplier.
+    * Penambahan stok bahan baku secara otomatis setelah pembelian divalidasi.
+* **Laporan & Grafik**:
+    * Grafik penjualan harian dan identifikasi produk terlaris (*Daily Top Orders*).
+    * Laporan transaksi mendetail berdasarkan hari, shift, atau kasir.
+* **Role & Permission**:
+    * Pengaturan role pengguna yang fleksibel seperti **Admin**, **Kasir**, **Barista / Dapur**, dan **Owner**.
+    * Akses granular ke berbagai bagian sistem sesuai dengan role pengguna.
 
-### 3. Siklus Hidup Sesi Tamu (Guest Session Lifecycle)
-- **4-Hour TTL Auto-Expiration:** Sesi tamu non-member otomatis kadaluarsa setelah 4 jam tanpa aktivitas untuk menjaga higienitas perangkat dan keamanan data.
-- **Escape Hatch saat Scan Ulang:** Pelanggan baru yang men-scan QR meja pada HP yang masih menyimpan sesi tamu sebelumnya dapat langsung menekan tombol *"Bukan [Nama]? Masuk sebagai Tamu Baru"* tanpa perlu clear cache browser secara manual.
-- **Selesai & Keluar Sesi:** Tombol konfirmasi penyelesaian sesi pada halaman pesanan selesai (`completed`) untuk mengakhiri kunjungan dan membersihkan keranjang.
+### 🌟 Fitur Tambahan & Ekosistem Terkini (Phase 2)
 
-### 4. Dynamic Pricing & Promosi Fleksibel
-- **BOGO (Buy One Get One):** Beli produk X dapat produk Y gratis.
-- **Happy Hour:** Diskon persentase atau potongan nominal otomatis pada jam dan hari tertentu.
-- **Min Spend Promo:** Potongan harga otomatis saat pesanan mencapai nilai minimum transaksi.
-- **Product Bundling:** Paket kombo makanan + minuman dengan harga spesial.
-
-### 5. Gamified Loyalty Program & Member Tiers
-- Sistem tingkatan member bertingkat: **Bronze**, **Silver**, **Gold**, dan **Platinum**.
-- Multiplier perolehan poin belanja sesuai level member.
-- **Gamification Challenges:** Misi berhadiah poin (misal: "Beli 5 Kopi Minggu Ini", "Weekend Spender").
-- Guard deduplikasi transaksi untuk menjamin poin hanya dikreditkan 1 kali saat pesanan berstatus `completed`.
-
-### 6. Multi-Payment Gateway dengan Idempotency Guard
-- Mendukung berbagai kanal pembayaran:
-  - **Bayar di Kasir (Cash / Tunai)**
-  - **QRIS Statis / Manual Upload Bukti**
-  - **Transfer Virtual Account**
-  - **Payment Gateway Midtrans (Snap/Core API)**
-  - **Payment Gateway Xendit (Invoice/E-Wallet)**
-- Dilengkapi `idempotency_key` dan database row-locking (`lockForUpdate`) untuk mencegah duplikasi pemrosesan webhook pembayaran.
-
-### 7. Manajemen Bahan Baku, Resep Topping & Waste Tracking
-- Komposisi bahan baku otomatis berkurang saat menu terjual.
-- **Pivot Topping Ingredients:** Konsumsi bahan baku untuk tambahan topping (misal: extra shot espresso, oat milk) dipotong secara akurat melalui tabel relasi `topping_ingredients`.
-- **Atomic Stock Check:** Mencegah stok menjadi minus dengan conditional decrement (`WHERE stock_qty >= needed`).
-- **Waste Management:** Pencatatan bahan baku yang tumpah, basi, atau kadaluarsa lengkap dengan alasan (*spoilage, expired, damage*) dan pelacakan cost kerugian.
-
-### 8. Pembersihan Otomatis Pesanan Terbengkalai (Order Auto-Expiration)
-- Perintah Artisan otomatis:
-  ```bash
-  php artisan orders:expire-pending --minutes=15
-  ```
-- Pesanan online yang tidak dibayar kasir dalam batas waktu wajar otomatis dibatalkan dan kuota stok bahan bakunya dikembalikan seketika.
-
-### 9. Modern UI: Smart Responsive Sidebar
-- Sidebar Filament responsif yang dapat di-**Pin (📌)** agar tetap terbuka atau di-**Unpin** agar menutup otomatis saat navigasi.
-- **Ribbon Tab:** Tombol tab melayang di tepi layar untuk membuka/menutup sidebar dengan 1 klik.
-- **Keyboard Shortcut:** Tekan tombol `[` pada keyboard untuk toggle sidebar secara instan.
-
-### 10. Kustomisasi Struk Thermal & WhatsApp
-- Pengaturan logo kafe, header, catatan kaki, nomor WhatsApp kasir, dan integrasi tombol *"Kirim Struk via WhatsApp"* langsung ke nomor pelanggan.
+* **Kitchen Display System (KDS)**:
+    * Antarmuka khusus dapur dan barista untuk memantau tiket antrean pesanan secara real-time.
+    * *Strict State Machine*: Transisi status pesanan (`submitted` ➔ `confirmed` ➔ `preparing` ➔ `ready` ➔ `completed`) tervalidasi agar tidak dapat melompat secara salah.
+    * Pembatalan pesanan di dapur otomatis mengembalikan (*rollback*) kuota bahan baku ke gudang.
+* **Customer Self-Order Hub (QR Meja)**:
+    * Pelanggan men-scan QR code di meja untuk membuka menu dan langsung memesan mandiri tanpa antre di kasir.
+    * Nomor meja terikat otomatis ke pesanan pelanggan.
+    * Modal kustomisasi menu ramah ponsel dengan gesture *swipe-down* dan pengaman tombol *Back* HP (*popstate trap*).
+    * Fitur *Panggil Pelayan* (Call Waiter) langsung dari meja.
+    * *Digital Audio Chime*: Smartphone pelanggan otomatis membunyikan nada lonceng digital ganda saat pesanan ditandai `ready`.
+* **Anti-Fraud Geofencing (GPS Lokasi Kafe)**:
+    * Formula matematika *Haversine* mendeteksi jarak pelanggan ke titik koordinat kafe.
+    * Opsi *Bayar Tunai di Kasir* otomatis dinonaktifkan jika pelanggan memesan dari luar radius kafe, mewajibkan pembayaran digital di muka (prepaid) untuk mencegah pesanan fiktif.
+* **Siklus Hidup Sesi Tamu (Guest Session Lifecycle)**:
+    * *Auto-Expiration 4 Jam (TTL)*: Sesi tamu non-member otomatis kadaluarsa setelah 4 jam tanpa aktivitas.
+    * Tombol *"Bukan [Nama]? Masuk sebagai Tamu Baru"* saat scan ulang QR meja agar pelanggan baru di meja yang sama tidak terjebak di akun tamu sebelumnya.
+    * Tombol *"Selesai & Keluar Sesi"* saat pesanan berstatus `completed`.
+    * Tautan cepat `(Ganti)` di samping nama pengguna pada header menu mobile.
+* **Dynamic Pricing & Promosi**:
+    * Mendukung promosi BOGO (*Buy One Get One*), diskon Happy Hour, diskon nominal/persentase, dan potongan minimum belanja.
+* **Program Loyalitas Member & Gamifikasi**:
+    * Pendaftaran member via nomor WhatsApp dengan perolehan poin belanja.
+    * Tingkatan level member (Bronze, Silver, Gold, Platinum).
+    * Misi tantangan belanja (*Gamification Challenges*) berhadiah poin tambahan.
+    * Poin dijamin hanya bertambah 1 kali saat pesanan berstatus `completed`.
+* **Waste Management (Pencatatan Bahan Rusak/Basi)**:
+    * Modul pencatatan bahan baku yang tumpah, basi, atau kedaluwarsa lengkap dengan alasan (*spoilage, damage, expired*) dan estimasi nilai kerugian.
+* **Pembersihan Otomatis Pesanan Terbengkalai**:
+    * Perintah Artisan terjadwal:
+      ```bash
+      php artisan orders:expire-pending --minutes=15
+      ```
+      Membatalkan pesanan unpaid yang ditinggalkan dan mengembalikan stok secara otomatis.
+* **Smart Responsive Sidebar**:
+    * Tombol Pin (📌) di header sidebar untuk mengunci sidebar agar tetap terbuka.
+    * Tombol Ribbon Tab (🔖) melayang di samping layar untuk toggle sidebar.
+    * Keyboard Shortcut: Tekan tombol `[` pada keyboard untuk membuka/menutup sidebar secara instan.
+* **Kustomisasi Struk Thermal**:
+    * Pengaturan logo kafe, header, footer kustom, dan integrasi pengiriman struk digital via WhatsApp.
 
 ---
 
-## 💻 Panduan Instalasi Lokal
+## 💻 Prasyarat
 
-### Prasyarat
-- PHP 8.2 atau 8.3 (ekstensi: `pdo_mysql`, `bcmath`, `mbstring`, `openssl`, `tokenizer`, `xml`, `ctype`, `curl`)
-- Composer 2.x
-- Node.js 18+ & npm
-- MySQL / MariaDB
+Sebelum memulai instalasi, pastikan Anda telah menginstal beberapa software berikut di sistem Anda:
 
-### Langkah Instalasi
+* **PHP 8.2+** atau **PHP 8.3** (dengan ekstensi `pdo_mysql`, `bcmath`, `mbstring`, `openssl`, `tokenizer`, `xml`, `curl`)
+* **Composer 2.x**
+* **MySQL 8.0+**, **MariaDB**, atau **TiDB Cloud**
+* **Node.js 18+** & **npm**
 
-1. **Clone Repository**
-   ```bash
-   git clone https://github.com/Jackyandrazat/pos-cafe.git
-   cd pos-cafe
-   ```
+---
 
-2. **Instal Dependensi PHP & Frontend**
-   ```bash
-   composer install
-   npm install && npm run build
-   ```
+## 🚀 Instalasi
 
-3. **Konfigurasi Environment**
-   ```bash
-   cp .env.example .env
-   php artisan key:generate
-   ```
-   Sesuaikan parameter database dan gateway pada file `.env`:
-   ```env
-   DB_CONNECTION=mysql
-   DB_HOST=127.0.0.1
-   DB_PORT=3306
-   DB_DATABASE=pos_cafe
-   DB_USERNAME=root
-   DB_PASSWORD=
-   ```
+Ikuti langkah-langkah di bawah ini untuk menginstal dan menjalankan aplikasi di lingkungan lokal Anda:
 
-4. **Jalankan Migrasi & Database Seeder**
-   ```bash
-   php artisan migrate --seed
-   ```
+1.  **Clone Repository**
 
-5. **Symlink Storage Media**
-   ```bash
-   php artisan storage:link
-   ```
+    Buka terminal atau command prompt Anda dan jalankan perintah berikut untuk mengkloning proyek:
+    ```bash
+    git clone https://github.com/Jackyandrazat/pos-cafe.git
+    cd pos-cafe
+    ```
 
-6. **Jalankan Server Lokal**
-   ```bash
-   php artisan serve
-   ```
-   Akses panel admin di: `http://127.0.0.1:8000/admin`
+2.  **Instal Dependensi**
+
+    Setelah masuk ke direktori proyek, instal semua dependensi PHP menggunakan Composer dan aset frontend dengan npm:
+    ```bash
+    composer install
+    npm install && npm run build
+    ```
+
+3.  **Konfigurasi `.env`**
+
+    Salin file contoh konfigurasi `.env.example` menjadi `.env`:
+    ```bash
+    cp .env.example .env
+    ```
+    Kemudian, buka file `.env` dan sesuaikan konfigurasi database (`DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`) serta layanan lain sesuai kebutuhan Anda.
+
+4.  **Generate Key Aplikasi**
+
+    Jalankan perintah berikut untuk menghasilkan kunci aplikasi Laravel:
+    ```bash
+    php artisan key:generate
+    ```
+
+5.  **Migrasi Database**
+
+    Jalankan migrasi untuk membuat semua tabel yang diperlukan di database Anda:
+    ```bash
+    php artisan migrate
+    ```
+
+6.  **Seed Data (Opsional)**
+
+    Jika Anda ingin menambahkan data sampel (seperti user, role, produk menu, meja, dll.) untuk pengujian, jalankan seeder:
+    ```bash
+    php artisan db:seed
+    ```
+
+7.  **Symlink Storage**
+
+    Jalankan pembuatan symlink agar gambar produk dan aset dapat diakses publik:
+    ```bash
+    php artisan storage:link
+    ```
+
+8.  **Jalankan Aplikasi**
+
+    Untuk menjalankan aplikasi, gunakan perintah Artisan:
+    ```bash
+    php artisan serve
+    ```
+    Aplikasi Anda sekarang dapat diakses melalui browser di: `http://localhost:8000/admin`.
 
 ---
 
@@ -198,42 +205,75 @@ docker compose logs -f
 
 ## 🧪 Pengujian Otomatis (Automated Tests)
 
-Semua fungsionalitas inti telah dilengkapi dengan Feature Tests:
+Semua fungsionalitas inti telah dilengkapi dengan automated tests untuk menjamin stabilitas:
 
 ```bash
 # Menjalankan seluruh test suite
 php artisan test
 
-# Menjalankan test spesifik
+# Menjalankan test modul spesifik
 php artisan test tests/Feature/Api/StoreConfigTest.php
 php artisan test tests/Feature/KitchenDisplayTest.php
 php artisan test tests/Feature/ReceiptSettingsTest.php
 ```
 
+Daftar skenario UAT lengkap dapat dilihat di [docs/uat-checklist.md](docs/uat-checklist.md).
+
 ---
 
-## 📂 Struktur Direktori Utama
+## 🔐 Role & Akses Pengguna
 
-```
-pos-cafe/
-├── app/
-│   ├── Console/Commands/       # Cron jobs (orders:expire-pending)
-│   ├── Filament/               # Resources, Pages (KDS, Settings, Shift)
-│   ├── Http/Controllers/Api/   # REST API V1 Controllers
-│   ├── Models/                 # Eloquent Models & Relationships
-│   ├── Observers/              # Model Observers (OrderObserver, Stock)
-│   └── Services/               # Business Logic Services (Payments, Stock, Loyalty)
-├── database/
-│   ├── migrations/             # Database Schema Migrations
-│   └── seeders/                # Sample Data Seeders
-├── docker/                     # Dockerfile, entrypoint.sh, php.ini, nginx
-├── docs/                       # Dokumentasi Teknis & UAT Checklist
-└── resources/
-    ├── css/                    # Custom Styling & Filament Overrides
-    └── js/                     # Smart Sidebar & Client Scripts
-```
+Sistem ini memiliki beberapa peran pengguna dengan tingkat akses yang berbeda:
+
+* **Owner**: Memiliki akses penuh ke seluruh aplikasi, termasuk laporan laba rugi, konfigurasi sistem, dan manajemen user.
+* **Admin**: Memiliki akses manajemen produk, bahan baku, pembelian, transaksi, laporan, dan pengaturan toko.
+* **Kasir**: Dapat melakukan transaksi POS, membuka/menutup shift kasir, dan mengelola pembayaran pelanggan.
+* **Barista / Dapur**: Mengoperasikan Kitchen Display System (KDS) untuk memproses tiket pesanan makanan dan minuman.
+
+---
+
+## 🧩 Struktur Folder
+
+Berikut adalah gambaran singkat tentang struktur folder utama dalam proyek ini:
+
+* `app/Console/Commands`: Berisi script cron job otomatis (seperti `orders:expire-pending`).
+* `app/Filament/Resources`: Lokasi untuk semua Filament Resources yang menangani fungsionalitas CRUD dan tampilan admin panel.
+* `app/Filament/Pages`: Halaman kustom Filament seperti Kitchen Display System (KDS) dan Pengaturan Struk.
+* `app/Http/Controllers/Api`: Controller REST API V1 untuk melayani frontend Self-Order Hub.
+* `app/Models`: Berisi semua model Eloquent yang digunakan dalam aplikasi untuk berinteraksi dengan database.
+* `app/Observers`: Observer untuk menangani side-effects seperti alokasi poin loyalty dan stok otomatis.
+* `app/Services`: Berisi *service helper* atau *business logic* (misalnya `StockService`, `PaymentService`, `GamifiedLoyaltyService`).
+* `database/migrations`: Skrip migrasi database yang mendefinisikan struktur tabel.
+* `docker/`: Berisi `Dockerfile`, `entrypoint.sh`, `php.ini`, dan konfigurasi web server untuk deployment.
+* `docs/`: Dokumentasi teknis sistem, arsitektur, dan matriks UAT checklist.
+* `resources/views/filament`: Berisi view Blade yang digunakan untuk kustomisasi tampilan admin panel Filament.
+* `resources/js & css`: Script kustom seperti smart sidebar manager, ribbon tab, dan gaya visual.
+
+---
+
+## 🚧 Fitur yang Sedang Dikembangkan
+
+Beberapa fitur sedang dalam pengembangan untuk terus meningkatkan fungsionalitas sistem:
+
+* **Export Laporan ke PDF/Excel**: Menambahkan kemampuan untuk mengekspor laporan transaksi dan pembelian ke format PDF atau Excel.
+* **Multi-Outlet Support**: Pengelolaan banyak cabang kafe dalam satu dashboard terpusat.
+* **Integrasi Printer Thermal Bluetooth Langsung**: Dukungan Web Bluetooth API untuk mencetak langsung dari browser HP kasir.
 
 ---
 
 ## 📄 Lisensi
-Didistribusikan di bawah Lisensi **MIT**. Hak Cipta © 2026 LakuPOS by kodeeweb.
+
+Proyek ini dilisensikan di bawah **MIT License**. Lihat file `LICENSE` di repository untuk detail lebih lanjut.
+
+---
+
+## 📞 Kontak
+
+Jika Anda memiliki pertanyaan, saran, atau menemukan masalah, jangan ragu untuk menghubungi:
+
+- **Repository**: [https://github.com/Jackyandrazat/pos-cafe](https://github.com/Jackyandrazat/pos-cafe)
+- **Email / Issue**: Silakan buka issue baru pada tab Issues di repository GitHub.
+
+---
+
+Terima kasih telah menggunakan **POS Cafe System**! 🚀
