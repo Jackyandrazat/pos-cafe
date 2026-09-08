@@ -33,12 +33,12 @@ php artisan storage:link --force || true
 
 # Run database migrations if configured
 if [ "$RUN_MIGRATIONS" = "true" ]; then
-    echo "Running database migrations..."
-    php artisan migrate --force || echo "Migration notice: check DB connection"
+    echo "Running database migrations on database: ${DB_DATABASE}..."
+    php artisan migrate --force || true
     
     if [ "$RUN_SEEDER" = "true" ]; then
         echo "Running database seeder..."
-        php artisan db:seed --force || echo "Seeder notice: already seeded or error"
+        php artisan db:seed --force || true
     fi
 fi
 
