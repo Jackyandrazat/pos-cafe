@@ -1,8 +1,8 @@
 {
     "info": {
-        "name": "Laku POS API v1",
+        "name": "Labo By kodeeweb API v1",
         "_postman_id": "5f76f5df-f51d-4bc7-aadd-31d77b7feb4e",
-        "description": "Collection to exercise the Laku POS public catalogue and authenticated order management APIs.",
+        "description": "Collection to exercise the Labo By kodeeweb public catalogue and authenticated order management APIs.",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [

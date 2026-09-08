@@ -1,5 +1,5 @@
 /**
- * Laku POS — Filament Sidebar Smart Manager
+ * Labo By kodeeweb — Filament Sidebar Smart Manager
  *
  * Fitur:
  *  1. Auto-close saat navigasi (Livewire navigated) jika unpinned.

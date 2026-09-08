@@ -1,5 +1,5 @@
 /* ─────────────────────────────────────────────────────────────────────
-   Laku POS — Filament Sidebar Custom CSS
+   Labo By kodeeweb — Filament Sidebar Custom CSS
    ───────────────────────────────────────────────────────────────────── */
 
 /* ── Smooth collapse transition ─────────────────────────────────────── */
@@ -206,7 +206,7 @@ body.pos-sidebar-open #pos-sidebar-tab {
 }
 
 /* ─────────────────────────────────────────────────────────────────────
-   Laku POS — Order List Cards & KDS Tickets Styling
+   Labo By kodeeweb — Order List Cards & KDS Tickets Styling
    ───────────────────────────────────────────────────────────────────── */
 .pos-card-grid {
     display: grid;
@@ -659,7 +659,7 @@ body.pos-sidebar-open #pos-sidebar-tab {
 }
 
 /* ─────────────────────────────────────────────────────────────────────
-   Laku POS — Payment View Cards & Receipt Additions
+   Labo By kodeeweb — Payment View Cards & Receipt Additions
    ───────────────────────────────────────────────────────────────────── */
 .pos-accent-captured {
     background: linear-gradient(90deg, #10b981, #059669);
@@ -824,7 +824,7 @@ body.pos-sidebar-open #pos-sidebar-tab {
 }
 
 /* ─────────────────────────────────────────────────────────────────────
-   Laku POS — Modal Backdrop & Thermal Receipt Dialog
+   Labo By kodeeweb — Modal Backdrop & Thermal Receipt Dialog
    ───────────────────────────────────────────────────────────────────── */
 .pos-modal-backdrop {
     position: fixed !important;
@@ -854,7 +854,7 @@ body.pos-sidebar-open #pos-sidebar-tab {
 }
 
 /* ─────────────────────────────────────────────────────────────────────
-   Laku POS — Kitchen Display System (KDS) Professional Theme
+   Labo By kodeeweb — Kitchen Display System (KDS) Professional Theme
    ───────────────────────────────────────────────────────────────────── */
 .kds-container {
     width: 100%;
@@ -2679,7 +2679,7 @@ body.pos-sidebar-open #pos-sidebar-tab {
 
 /* ─────────────────────────────────────────────────────────────────────
    ADMIN PANEL TACTILE THEME & COLOR PALETTE ALIGNMENT
-   (Aligned with TableStatusBoard & Laku POS Tactile Design System)
+   (Aligned with TableStatusBoard & Labo By kodeeweb Tactile Design System)
    ───────────────────────────────────────────────────────────────────── */
 
 /* Global Body & Typography */
@@ -2688,6 +2688,7 @@ body.fi-body {
     color: #1e293b;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
+
 .dark body.fi-body {
     background-color: #0f172a;
     color: #f1f5f9;
@@ -2700,6 +2701,7 @@ body.fi-body {
     border-bottom: 1.5px solid #e2e8f0 !important;
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
 }
+
 .dark .fi-topbar {
     background: rgba(30, 41, 59, 0.96) !important;
     border-bottom: 1.5px solid #334155 !important;
@@ -2711,6 +2713,7 @@ body.fi-body {
     background: #ffffff !important;
     border-right: 1.5px solid #e2e8f0 !important;
 }
+
 .dark .fi-sidebar {
     background: #1e293b !important;
     border-right: 1.5px solid #334155 !important;
@@ -2726,6 +2729,7 @@ body.fi-body {
     background-color: #f1f5f9 !important;
     color: #0f172a !important;
 }
+
 .dark .fi-sidebar-item-button:hover {
     background-color: #334155 !important;
     color: #ffffff !important;
@@ -2738,6 +2742,7 @@ body.fi-body {
     font-weight: 800 !important;
     box-shadow: 0 1px 4px rgba(217, 119, 6, 0.12) !important;
 }
+
 .dark .fi-sidebar-item-active .fi-sidebar-item-button {
     background: rgba(245, 158, 11, 0.16) !important;
     color: #fbbf24 !important;
@@ -2751,6 +2756,7 @@ body.fi-body {
     letter-spacing: -0.025em !important;
     color: #0f172a !important;
 }
+
 .dark .fi-header-heading {
     color: #ffffff !important;
 }
@@ -2763,6 +2769,7 @@ body.fi-body {
     box-shadow: 0 2px 10px -2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.02) !important;
     overflow: hidden !important;
 }
+
 .dark .fi-section {
     border-color: #334155 !important;
     background-color: #1e293b !important;
@@ -2773,6 +2780,7 @@ body.fi-body {
     border-bottom: 1px solid #f1f5f9 !important;
     padding-bottom: 0.85rem !important;
 }
+
 .dark .fi-section-header {
     border-bottom-color: #334155 !important;
 }
@@ -2783,6 +2791,7 @@ body.fi-body {
     color: #0f172a !important;
     letter-spacing: -0.01em !important;
 }
+
 .dark .fi-section-header-heading {
     color: #f1f5f9 !important;
 }
@@ -2793,14 +2802,17 @@ body.fi-body {
     border: 1.5px solid #cbd5e1 !important;
     transition: all 0.15s ease !important;
 }
+
 .fi-input-wrp:focus-within {
     border-color: #f59e0b !important;
     box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15) !important;
 }
+
 .dark .fi-input-wrp {
     border-color: #475569 !important;
     background-color: #0f172a !important;
 }
+
 .dark .fi-input-wrp:focus-within {
     border-color: #f59e0b !important;
     box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25) !important;
@@ -2814,6 +2826,7 @@ body.fi-body {
     overflow: hidden !important;
     background: #ffffff !important;
 }
+
 .dark .fi-ta-ctn {
     border-color: #334155 !important;
     background: #1e293b !important;
@@ -2831,6 +2844,7 @@ body.fi-body {
     padding-top: 0.75rem !important;
     padding-bottom: 0.75rem !important;
 }
+
 .dark .fi-ta-header-cell {
     background-color: #0f172a !important;
     color: #94a3b8 !important;
@@ -2840,9 +2854,11 @@ body.fi-body {
 .fi-ta-row {
     transition: background-color 0.15s ease !important;
 }
+
 .fi-ta-row:hover {
     background-color: #f8fafc !important;
 }
+
 .dark .fi-ta-row:hover {
     background-color: #334155 !important;
 }
@@ -2854,9 +2870,11 @@ body.fi-body {
     letter-spacing: -0.01em !important;
     transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
+
 .fi-btn:hover {
     transform: translateY(-1px) !important;
 }
+
 .fi-btn:active {
     transform: scale(0.98) !important;
 }
@@ -2868,6 +2886,7 @@ body.fi-body {
     box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3) !important;
     border: none !important;
 }
+
 .fi-btn-color-primary:hover {
     background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
     box-shadow: 0 4px 12px rgba(217, 119, 6, 0.4) !important;
@@ -2880,6 +2899,7 @@ body.fi-body {
     box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3) !important;
     border: none !important;
 }
+
 .fi-btn-color-success:hover {
     background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
     box-shadow: 0 4px 12px rgba(5, 150, 105, 0.4) !important;
@@ -2892,6 +2912,7 @@ body.fi-body {
     box-shadow: 0 2px 8px rgba(225, 29, 72, 0.3) !important;
     border: none !important;
 }
+
 .fi-btn-color-danger:hover {
     background: linear-gradient(135deg, #e11d48 0%, #be123c 100%) !important;
     box-shadow: 0 4px 12px rgba(225, 29, 72, 0.4) !important;
@@ -2911,6 +2932,7 @@ body.fi-body {
     border: 1.5px solid #e2e8f0 !important;
     box-shadow: 0 20px 40px -4px rgba(15, 23, 42, 0.16) !important;
 }
+
 .dark .fi-modal-window {
     border-color: #334155 !important;
     box-shadow: 0 24px 48px -4px rgba(0, 0, 0, 0.5) !important;

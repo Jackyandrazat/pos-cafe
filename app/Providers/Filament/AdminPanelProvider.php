@@ -29,7 +29,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-            ->brandName('Laku By Kodeweb')
+            ->brandName('Labo By kodeeweb')
             ->colors([
                 'primary' => Color::Amber,
                 'gray'    => Color::Slate,
