@@ -1,0 +1,56 @@
+FROM php:8.2-fpm-alpine
+
+# Set working directory
+WORKDIR /var/www/html
+
+# Install system dependencies
+RUN apk add --no-cache \
+    nginx \
+    supervisor \
+    curl \
+    git \
+    bash \
+    ca-certificates \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
+    icu-dev \
+    libzip-dev \
+    oniguruma-dev
+
+# Configure and install PHP extensions
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) \
+        pdo_mysql \
+        bcmath \
+        gd \
+        intl \
+        zip \
+        opcache \
+        pcntl \
+        exif
+
+# Install Composer from official image
+COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
+
+# Copy application files
+COPY . /var/www/html
+
+# Copy configuration files
+COPY docker/nginx.conf /etc/nginx/http.d/default.conf
+COPY docker/supervisord.conf /etc/supervisord.conf
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Install composer dependencies
+RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+# Set permissions
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
+# Expose ports
+EXPOSE 80 10000
+
+# Run entrypoint
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

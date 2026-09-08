@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: pos-cafe
+    runtime: docker
+    plan: free
+    region: singapore
+    envVars:
+      - key: APP_NAME
+        value: "POS Cafe"
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: RUN_MIGRATIONS
+        value: "true"
+      - key: RUN_SEEDER
+        value: "true"
+      - key: DB_CONNECTION
+        value: mysql
+      - key: DB_PORT
+        value: "4000"
+      - key: MYSQL_ATTR_SSL_CA
+        value: "/etc/ssl/certs/ca-certificates.crt"
